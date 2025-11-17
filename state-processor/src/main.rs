@@ -9,7 +9,7 @@ fn validate_and_run_terrain_gen(args: &[String]) {
     assert_eq!(args[1], "gen-map"); // technically impossible to be wrong,
                                                           // but just for sanity
     assert_lt!(args.len(), 4);                            // Shouldn't have nonsense
-    if (args.len() == 3) {
+    if args.len() == 3 {
 
     }
 }
@@ -17,7 +17,7 @@ fn validate_and_run_terrain_gen(args: &[String]) {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if (args.len() < 2) {
+    if args.len() < 2 {
         println!("Invalid number of arguments");
         return;
     }
