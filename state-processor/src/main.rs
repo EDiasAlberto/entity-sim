@@ -1,8 +1,23 @@
 use std::env;
 
-fn generate_terrain() {
+enum TerrainArgs {
+    BinaryName,
+    BinaryMode,
+    Argument1,
+}
+
+fn generate_terrain(args: &[String]) {
     //TODO
     println!("Generating terrain!");
+    /*
+     * Idea: Generate map from optional provided seed
+     * Get noise seed from args 
+     * Generate noise map for altitude/verticality
+     * Generate secondary noise map for terrain 
+     * Use both to generate overall map data 
+    */
+
+
 }
 
 fn process_state() {
@@ -17,7 +32,7 @@ fn main() {
     dbg!(mode);
 
     match mode.as_str() {
-        "gen-map" => generate_terrain(),
+        "gen-map" => generate_terrain(&args),
         "process-state" => process_state()
         _ => println!("Error, invalid mode!")
     }
