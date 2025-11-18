@@ -16,6 +16,13 @@ fn validate_and_run_terrain_gen(args: &[String]) {
     }
 }
 
+fn run_entity_gen(args: &[String]) {
+    let mut mgmt = core::EntityMgmt::new(0,0,100,100);
+    mgmt.generate_random_entities(5);
+    println!("{:#?}", mgmt);
+
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -29,6 +36,7 @@ fn main() {
 
     match mode.as_str() {
         "gen-map" => validate_and_run_terrain_gen(&args),
+        "gen-entities" => run_entity_gen(&args),
         "process-state" => core::process_state(),
         _ => println!("Error, invalid mode!"),
     }
