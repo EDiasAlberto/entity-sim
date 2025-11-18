@@ -1,4 +1,5 @@
 use noise::{Perlin, NoiseFn};
+use numpy::{PyArray2, PyArray1, PyArrayMethods};
 use pyo3::prelude::*;
 use std::fmt;
 
@@ -14,7 +15,8 @@ pub enum Material {
     Ice = 2,
 }
 
-#[derive(IntoPyObject)]
+#[pyclass]
+#[derive(Clone, Copy)]
 pub struct MapPoint {
     height: u8,
     material: u8, 
@@ -26,10 +28,13 @@ impl fmt::Debug for MapPoint {
     }
 }
 
-#[derive(IntoPyObject)]
+#[pyclass]
 pub struct Terrain {
+    #[pyo3(get)]
     width: u16,
+    #[pyo3(get)]
     height: u16,
+    #[pyo3(get)]
     depth: u8,
     map: Vec<MapPoint>
 }
@@ -50,13 +55,40 @@ impl fmt::Display for Terrain {
     }
 }
 
+#[pymethods]
+impl Terrain {
+    
+    // Returns terrain materials and heights as numpy arrays
+    // Returns a tuple of (materials, heights) where each is a 2D numpy array
+    fn get_map_data<'py>(&self, py: Python<'py>) -> PyResult<(Bound<'py, PyArray2<u8>>, Bound<'py, PyArray2<u8>>)> {
+        let size = (self.height as usize, self.width as usize);
+        
+        // Create numpy arrays
+        let materials = PyArray2::<u8>::zeros(py, size, false);
+        let heights = PyArray2::<u8>::zeros(py, size, false);
+        
+        // Get mutable slices
+        unsafe {
+            let materials_slice = materials.as_slice_mut()?;
+            let heights_slice = heights.as_slice_mut()?;
+            
+            for (i, point) in self.map.iter().enumerate() {
+                materials_slice[i] = point.material;
+                heights_slice[i] = point.height;
+            }
+        }
+        
+        Ok((materials, heights))
+    }
+}
+
 impl Terrain {
     pub fn new(width: u16, height: u16, depth: u8) -> Terrain {
         Terrain {width , height, depth, map: vec![]}
     }
 
-    fn get_point(&self, x: u16, y: u16) -> &MapPoint {
-        let idx: usize = ((y * self.width) + (x)).into();
+    pub fn get_point(&self, x: u16, y: u16) -> &MapPoint {
+        let idx: usize = ((y as usize * self.width as usize) + (x as usize));
         return &(self.map[idx]);
     }
 

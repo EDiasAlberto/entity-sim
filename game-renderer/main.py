@@ -8,31 +8,42 @@ def render_terrain(terrain_map, colour_dict):
     Renders the terrain map to a pygame surface.
     
     Args:
-        terrain_map: Dictionary containing 'width', 'height', and 'map' data
+        terrain_map: Dictionary containing 'width', 'height', and 'map' data (tuple of numpy arrays)
         colour_dict: Dictionary mapping material IDs to RGB colors
     
     Returns:
         pygame.Surface: Scaled surface with terrain rendered
     """
-    terrain_width = terrain_map['width']
-    terrain_height = terrain_map['height']
+    terrain_width = terrain_map.width
+    terrain_height = terrain_map.height
     
-    # Create numpy array for terrain colors
-    terrain_array = np.ndarray((terrain_width, terrain_height, 3))
+    # Get the map data as a tuple of numpy arrays (height_array, material_array)
+    map_data = terrain_map.get_map_data()
     
-    for i in range(terrain_height):
-        for j in range(terrain_width):
-            curr_idx = (i * terrain_width) + j
-            curr_cell = terrain_map['map'][curr_idx]
-            terrain_array[i][j] = colour_dict[curr_cell['material']]
+    # map_data is a tuple of numpy arrays: (height_array, material_array)
+    # We only need the material array for rendering colors
+    material_array = map_data[1] if isinstance(map_data, tuple) else map_data
+    
+    # Reshape the material array to 2D if it's 1D
+    if len(material_array.shape) == 1:
+        material_array = material_array.reshape((terrain_height, terrain_width))
+    
+    # Create numpy array for terrain colors (RGB)
+    terrain_array = np.zeros((terrain_height, terrain_width, 3), dtype=np.uint8)
+    
+    # Map each material ID to its corresponding color
+    for material_id, color in colour_dict.items():
+        mask = material_array == material_id
+        terrain_array[mask] = color
     
     # Create surface and blit the terrain
     cellsize = 1
-    width = terrain_array.shape[0] * cellsize
-    height = terrain_array.shape[1] * cellsize
+    width = terrain_array.shape[1] * cellsize
+    height = terrain_array.shape[0] * cellsize
     
-    surf = pygame.Surface((terrain_array.shape[0], terrain_array.shape[1]))
-    pygame.surfarray.blit_array(surf, terrain_array)
+    surf = pygame.Surface((terrain_array.shape[1], terrain_array.shape[0]))
+    # Note: pygame expects (width, height) ordering, numpy uses (height, width)
+    pygame.surfarray.blit_array(surf, np.transpose(terrain_array, (1, 0, 2)))
     surf = pygame.transform.scale(surf, (width, height))
     
     return surf
@@ -68,8 +79,8 @@ colour_dict = {
 
 # Initialize pygame
 pygame.init()
-WIDTH = gs['terrain_map']['width']
-HEIGHT = gs['terrain_map']['height']
+WIDTH = gs['terrain_map'].width
+HEIGHT = gs['terrain_map'].height
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
