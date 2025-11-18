@@ -55,7 +55,7 @@ impl Terrain {
     fn noise_to_height(&self, noise: f64) -> u8 {
         let normalised_noise = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0] 
         let scaled_height = normalised_noise * (self.depth as f64); 
-        (scaled_height as u8)
+        scaled_height as u8
     }
 
     fn initialise_terrain(&mut self, noise: &Perlin) -> bool {
