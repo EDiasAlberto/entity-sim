@@ -27,6 +27,12 @@ fn run_entity_gen(args: &[String]) {
 
 }
 
+fn generate_game_state(args: &[String]) {
+    let mut gs = core::generate_game_state((800, 800, 10), (200, 200, 400, 400));
+
+
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -41,6 +47,7 @@ fn main() {
     match mode.as_str() {
         "gen-map" => validate_and_run_terrain_gen(&args),
         "gen-entities" => run_entity_gen(&args),
+        "gen-state" => generate_game_state(&args),
         "process-state" => core::process_state(),
         _ => println!("Error, invalid mode!"),
     }
