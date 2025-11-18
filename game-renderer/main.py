@@ -2,7 +2,7 @@ import pygame
 import numpy as np
 import state_processor as sp 
 
-gs = sp.generate_game_state()
+gs = sp.generate_game_state((800, 800, 10), (200, 200, 400, 400))
 terrain_map = gs['terrain_map']
 terrain_map_width = terrain_map['width']
 terrain_map_height = terrain_map['height']

@@ -41,9 +41,9 @@ pub fn generate_entities(spawn_zone: (u16, u16, u16, u16), amount: Option<u8>) -
     mgmt
 }
 
-pub fn generate_game_state() -> GameState {
-    let terrain = generate_terrain((800, 800, 10), None);
-    let entities = generate_entities((200, 200, 400, 400), None);
+pub fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16)) -> GameState {
+    let terrain = generate_terrain(map_size, None);
+    let entities = generate_entities(spawn_zone, None);
     let mut gs = GameState::new(terrain, entities);
     gs.entity_mgmt.generate_random_entities(10);
     gs
