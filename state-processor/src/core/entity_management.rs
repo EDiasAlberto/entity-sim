@@ -73,6 +73,9 @@ impl EntityMgmt {
             map.insert(*id, entity.location);
         }
         map
-        
+    }
+
+    pub fn update(&mut self) {
+        println!("Updated entities!");
     }
 }

@@ -15,4 +15,10 @@ impl GameState {
         GameState {time_mgmt: time, terrain_map: terrain, entity_mgmt: entities}
     }
 
+    pub fn advance_state(&mut self) {
+        self.time_mgmt.update();
+        self.entity_mgmt.update();
+
+    }
+
 }

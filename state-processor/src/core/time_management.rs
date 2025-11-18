@@ -9,4 +9,9 @@ impl TimeMgmt {
     pub fn new(start_time: u32) -> TimeMgmt {
         TimeMgmt {time: start_time}
     }
+
+    pub fn update(&mut self) -> u32 {
+        self.time += 1;
+        self.time
+    }
 }
