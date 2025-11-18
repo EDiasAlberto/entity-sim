@@ -6,7 +6,6 @@ use rand::Rng;
 use std::fmt;
 
 mod terrain;
-mod map_point;
 
 pub use terrain::Terrain;
 
