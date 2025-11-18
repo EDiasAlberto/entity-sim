@@ -2,23 +2,27 @@ import pygame
 import numpy as np
 import state_processor as sp 
 
-terrain_map = sp.validate_and_run_terrain_gen(100, 100, 10)
+gs = sp.generate_game_state()
+terrain_map = gs['terrain_map']
+terrain_map_width = terrain_map['width']
+terrain_map_height = terrain_map['height']
+
 colour_dict = {
     0: (255, 0, 0),
-    1: (255, 0, 0),
-    2: (0, 255, 0),
-    3: (0, 0, 255) 
+    1: (0, 255, 0),
+    2: (0, 0, 255),
 }
 
-map = np.ndarray((100, 100, 3))
 
-for i in range(100):
-    for j in range(100):
-        curr_idx = (i * 100) + j
+map = np.ndarray((terrain_map_width, terrain_map_height, 3))
+
+for i in range(terrain_map_height):
+    for j in range(terrain_map_width):
+        curr_idx = (i * terrain_map_width) + j
         curr_cell = terrain_map['map'][curr_idx]
         map[i][j] = colour_dict[curr_cell['material']]
 
-cellsize = 10
+cellsize = 1 
 WIDTH = map.shape[0] * cellsize
 HEIGHT = map.shape[1] * cellsize
 

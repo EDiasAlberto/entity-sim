@@ -19,9 +19,10 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) -> Terrai
     };
 
     let perlin = Perlin::new(random_seed);
+    let biome_perlin = Perlin::new(random_seed.wrapping_add(1000)); // Different seed for biomes
     let (width, height, depth) = dimensions;
     let mut new_terrain = Terrain::new(width, height, depth);
-    new_terrain.initialise_terrain(&perlin);
+    new_terrain.initialise_terrain(&perlin, &biome_perlin);
     //dbg!(new_terrain);
     new_terrain
 
@@ -41,7 +42,7 @@ pub fn generate_entities(spawn_zone: (u16, u16, u16, u16), amount: Option<u8>) -
 }
 
 pub fn generate_game_state() -> GameState {
-    let terrain = generate_terrain((1000, 1000, 10), None);
+    let terrain = generate_terrain((800, 800, 10), None);
     let entities = generate_entities((200, 200, 400, 400), None);
     let mut gs = GameState::new(terrain, entities);
     gs.entity_mgmt.generate_random_entities(10);

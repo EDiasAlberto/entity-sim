@@ -1,5 +1,6 @@
 use rand::Rng;
 use rand::distr::{Bernoulli, Distribution, Uniform};
+use pyo3::prelude::*;
 use std::collections::HashMap;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
@@ -8,7 +9,7 @@ const PROFICIENT_MUD_SCALAR: f64 = 0.8;
 const BASE_ICE_SCALAR: f64 = 0.4;
 const PROFICIENT_ICE_SCALAR: f64 = 0.7;
 
-#[derive(Debug)]
+#[derive(IntoPyObject,Debug)]
 pub struct Entity {
     age: u8,
     hunger: u8,
@@ -41,7 +42,7 @@ impl Entity {
     }
 }
 
-#[derive(Debug)]
+#[derive(IntoPyObject,Debug)]
 pub struct EntityMgmt {
     spawn_area: (u16, u16, u16, u16),
     entities: HashMap<u16, Entity>,

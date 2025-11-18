@@ -4,7 +4,7 @@ use std::fmt;
 
 
 const BASE_NOISE_SCALE: f64 = 6.0;
-const BASE_BIOME_SCALE: f64 = 0.6;
+const BASE_BIOME_SCALE: f64 = 0.8;  // Much larger scale = bigger, smoother biomes
 
 #[pyclass]
 #[derive(Clone, Copy, Debug)]
@@ -66,16 +66,42 @@ impl Terrain {
         scaled_height as u8
     }
 
-    pub fn initialise_terrain(&mut self, noise: &Perlin) -> bool {
+    fn biome_noise_to_material(&self, noise: f64) -> u8 {
+        let normalised = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0]
+        
+        // Adjust thresholds to reduce grass proportion
+        // Grass now occupies the middle 25% instead of 33%
+        if normalised < 0.375 {
+            0  // Mud
+        } else if normalised < 0.625 {
+            1  // Grass (reduced range)
+        } else {
+            2  // Ice
+        }
+    }
+
+    pub fn initialise_terrain(&mut self, noise: &Perlin, biome_noise: &Perlin) -> bool {
         let scale: f64 = BASE_NOISE_SCALE / (self.width as f64 * 0.5);
         let biome_scale = BASE_BIOME_SCALE / (self.width as f64 * 0.5);
+        
         println!("{scale}");
         for y in 0..self.height {
             for x in 0..self.width { 
                 let noise_val = noise.get([x as f64 * scale, y as f64 * scale]);
-                let biome_noise = noise.get([x as f64 * biome_scale, y as f64 * biome_scale]);
+                
+                // Multi-octave biome noise for more organic shapes
+                let biome_x = x as f64 * biome_scale;
+                let biome_y = y as f64 * biome_scale;
+                
+                // Layer multiple frequencies (octaves) for natural-looking biomes
+                let biome_noise_1 = biome_noise.get([biome_x, biome_y]) * 1.0;
+                let biome_noise_2 = biome_noise.get([biome_x * 2.5, biome_y * 2.5]) * 0.5;
+                let biome_noise_3 = biome_noise.get([biome_x * 5.0, biome_y * 5.0]) * 0.25;
+                
+                let combined_biome_noise = (biome_noise_1 + biome_noise_2 + biome_noise_3) / 1.75;
+                
                 let height_val = Self::noise_range_change(self, noise_val, self.depth as f64);
-                let material_val = Self::noise_range_change(self, biome_noise, 4.0);
+                let material_val = Self::biome_noise_to_material(self, combined_biome_noise);
                 self.map.push(MapPoint {height: height_val, material: material_val});
             }
         }
