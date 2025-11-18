@@ -62,7 +62,7 @@ impl Terrain {
     fn noise_to_biome(&self, noise: f64) -> Material {
         let normalised_noise = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0] 
         let chosen_biome = normalised_noise * 4.0; 
-        match (chosen_biome as u8) {
+        match chosen_biome as u8 {
             0 => Material::Mud,
             1 => Material::Grass,
             2 => Material::Ice,
