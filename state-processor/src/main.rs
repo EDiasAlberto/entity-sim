@@ -19,7 +19,11 @@ fn validate_and_run_terrain_gen(args: &[String]) {
 fn run_entity_gen(args: &[String]) {
     let mut mgmt = core::EntityMgmt::new(0,0,100,100);
     mgmt.generate_random_entities(5);
-    println!("{:#?}", mgmt);
+    //println!("{:#?}", mgmt);
+    let entity_locs = mgmt.get_all_entity_locs();
+    for (id, loc) in &entity_locs {
+        println!("Entity ID: {}, is at {:#?}", id, loc);
+    }
 
 }
 

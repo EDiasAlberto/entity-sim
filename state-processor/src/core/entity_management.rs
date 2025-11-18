@@ -1,5 +1,6 @@
 use rand::Rng;
 use rand::distr::{Bernoulli, Distribution, Uniform};
+use std::collections::HashMap;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
@@ -43,13 +44,13 @@ impl Entity {
 #[derive(Debug)]
 pub struct EntityMgmt {
     spawn_area: (u16, u16, u16, u16),
-    entities: Vec<Entity>,
+    entities: HashMap<u16, Entity>,
 }
 
 impl EntityMgmt {
 
     pub fn new(spawn_x_tl: u16, spawn_y_tl: u16, spawn_x_br: u16, spawn_y_br: u16) -> EntityMgmt{
-        EntityMgmt {spawn_area: (spawn_x_tl, spawn_y_tl, spawn_x_br, spawn_y_br), entities: vec![]}
+        EntityMgmt {spawn_area: (spawn_x_tl, spawn_y_tl, spawn_x_br, spawn_y_br), entities: HashMap::new()}
     }
 
     pub fn generate_random_entities(&mut self, count: u8) {
@@ -57,11 +58,20 @@ impl EntityMgmt {
         let between_y = Uniform::try_from(self.spawn_area.1..self.spawn_area.3).unwrap();
         let gender = Bernoulli::new(0.5).unwrap();
         let mut rng = rand::rng();
-        for _ in 0..count {
+        for id in 0..count {
             let spawn_loc_x = between_x.sample(&mut rng);
             let spawn_loc_y = between_y.sample(&mut rng);
             let is_male = gender.sample(&mut rng);
-            self.entities.push(Entity::new(2,false, false, (spawn_loc_x, spawn_loc_y), is_male));
+            self.entities.insert((id as u16), Entity::new(2,false, false, (spawn_loc_x, spawn_loc_y), is_male));
         }
+    }
+
+    pub fn get_all_entity_locs(&self) -> HashMap<u16, (u16, u16)> {
+        let mut map = HashMap::new();
+        for (id, entity) in &self.entities {
+            map.insert(*id, entity.location);
+        }
+        map
+        
     }
 }
