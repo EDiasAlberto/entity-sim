@@ -4,6 +4,7 @@ use rand::Rng;
 use std::fmt;
 
 const BASE_NOISE_SCALE: f64 = 6.0;
+const BASE_BIOME_SCALE: f64 = 0.6;
 
 #[derive(Debug)]
 enum Material {
@@ -58,15 +59,29 @@ impl Terrain {
         scaled_height as u8
     }
 
+    fn noise_to_biome(&self, noise: f64) -> Material {
+        let normalised_noise = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0] 
+        let chosen_biome = normalised_noise * 4.0; 
+        match (chosen_biome as u8) {
+            0 => Material::Mud,
+            1 => Material::Grass,
+            2 => Material::Ice,
+            _ => Material::Grass,
+        }
+    }
+
     fn initialise_terrain(&mut self, noise: &Perlin) -> bool {
         let scale: f64 = BASE_NOISE_SCALE / (self.width as f64 * 0.5);
+        let biome_scale = BASE_BIOME_SCALE / (self.width as f64 * 0.5);
         println!("{scale}");
         for y in 0..self.height {
             for x in 0..self.width { 
                 let noise_val = noise.get([x as f64 * scale, y as f64 * scale]);
+                let biome_noise = noise.get([x as f64 * biome_scale, y as f64 * biome_scale]);
                 //println!("Point at {x}, {y} has noise {:.4}", &noise_val);
                 let height_val = Self::noise_to_height(self, noise_val);
-                self.map.push(MapPoint {height: height_val, material: Material::Grass})
+                let material_val = Self::noise_to_biome(self, biome_noise);
+                self.map.push(MapPoint {height: height_val, material: material_val});
             }
         }
         true
@@ -90,7 +105,6 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) {
     let mut new_terrain = Terrain {width , height, depth, map: vec![]};
     new_terrain.initialise_terrain(&perlin);
     dbg!(new_terrain);
-
 
 }
 
