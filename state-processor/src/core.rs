@@ -1,18 +1,22 @@
 //Defines core simulation handling logic
 use noise::{Perlin, NoiseFn};
+use pyo3::IntoPyObject;
+use pyo3::prelude::*;
 use rand::Rng;
 use std::fmt;
 
 const BASE_NOISE_SCALE: f64 = 6.0;
 const BASE_BIOME_SCALE: f64 = 0.6;
 
-#[derive(Debug)]
+#[pyclass]
+#[derive(Clone, Copy, Debug)]
 enum Material {
     Mud,
     Grass,
     Ice,
 }
 
+#[derive(IntoPyObject)]
 struct MapPoint {
     height: u8,
     material: Material
@@ -24,7 +28,8 @@ impl fmt::Debug for MapPoint {
     }
 }
 
-struct Terrain {
+#[derive(IntoPyObject)]
+pub struct Terrain {
     width: u16,
     height: u16,
     depth: u8,
@@ -88,16 +93,9 @@ impl Terrain {
     }
 }
 
-pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) {
+pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) -> Terrain {
     //TODO
     println!("Generating terrain!");
-    /*
-     * Idea: Generate map from optional provided seed
-     * Get noise seed from args 
-     * Generate noise map for altitude/verticality
-     * Generate secondary noise map for terrain 
-     * Use both to generate overall map data 
-    */
     
     let random_seed: u32 = match seed {
         Some(x) => x,
@@ -108,7 +106,9 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) {
     let (width, height, depth) = dimensions;
     let mut new_terrain = Terrain {width , height, depth, map: vec![]};
     new_terrain.initialise_terrain(&perlin);
-    dbg!(new_terrain);
+    //dbg!(new_terrain);
+    println!("{:#?}", new_terrain);
+    new_terrain
 
 }
 
