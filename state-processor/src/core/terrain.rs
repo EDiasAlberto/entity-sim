@@ -74,7 +74,7 @@ impl Terrain {
             for x in 0..self.width { 
                 let noise_val = noise.get([x as f64 * scale, y as f64 * scale]);
                 let biome_noise = noise.get([x as f64 * biome_scale, y as f64 * biome_scale]);
-                let height_val = Self::noise_range_change(self, noise_val, (self.depth as f64));
+                let height_val = Self::noise_range_change(self, noise_val, self.depth as f64);
                 let material_val = Self::noise_range_change(self, biome_noise, 4.0);
                 self.map.push(MapPoint {height: height_val, material: material_val});
             }

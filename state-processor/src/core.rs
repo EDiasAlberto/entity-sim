@@ -1,9 +1,6 @@
 //Defines core simulation handling logic
-use noise::{Perlin, NoiseFn};
-use pyo3::IntoPyObject;
-use pyo3::prelude::*;
+use noise::Perlin;
 use rand::Rng;
-use std::fmt;
 
 mod terrain;
 mod entity_management;
