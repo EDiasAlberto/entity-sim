@@ -98,8 +98,12 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) {
      * Generate secondary noise map for terrain 
      * Use both to generate overall map data 
     */
-    let mut rng = rand::rng();
-    let random_seed: u32 = rng.random();
+    
+    let random_seed: u32 = match seed {
+        Some(x) => x,
+        None => {let mut rng = rand::rng(); rng.random()},
+    };
+
     let perlin = Perlin::new(random_seed);
     let (width, height, depth) = dimensions;
     let mut new_terrain = Terrain {width , height, depth, map: vec![]};
