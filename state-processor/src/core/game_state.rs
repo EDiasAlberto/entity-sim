@@ -18,7 +18,5 @@ impl GameState {
     pub fn advance_state(&mut self) {
         self.time_mgmt.update();
         self.entity_mgmt.update();
-
     }
-
 }
