@@ -9,7 +9,9 @@ fn validate_and_run_terrain_gen(args: &[String]) {
     assert_eq!(args[1], "gen-map"); // technically impossible to be wrong,
                                                           // but just for sanity
     assert_lt!(args.len(), 4);                            // Shouldn't have nonsense
-    if args.len() == 3 {
+    println!("{}", args.len());
+    if args.len() == 2 {
+        core::generate_terrain((100, 100, 10), None);
 
     }
 }
