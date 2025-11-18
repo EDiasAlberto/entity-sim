@@ -6,8 +6,12 @@ use rand::Rng;
 use std::fmt;
 
 mod terrain;
+mod entity_management;
+mod game_state;
 
 pub use terrain::Terrain;
+pub use game_state::GameState;
+pub use entity_management::EntityMgmt;
 
 pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) -> terrain::Terrain {
     println!("Generating terrain!");
@@ -19,10 +23,14 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) -> terrai
 
     let perlin = Perlin::new(random_seed);
     let (width, height, depth) = dimensions;
-    let mut new_terrain = terrain::Terrain::new(width, height, depth);
+    let mut new_terrain = Terrain::new(width, height, depth);
     new_terrain.initialise_terrain(&perlin);
     //dbg!(new_terrain);
     new_terrain
+
+}
+
+pub fn generate_initial_entities(sim: GameState, amount: Option<u16>) {
 
 }
 
