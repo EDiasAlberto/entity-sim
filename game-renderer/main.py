@@ -20,9 +20,9 @@ def render_terrain(terrain_map, colour_dict):
     # Get the map data as a tuple of numpy arrays (height_array, material_array)
     map_data = terrain_map.get_map_data()
     
-    # map_data is a tuple of numpy arrays: (height_array, material_array)
+    # map_data is a tuple of numpy arrays: (material_array, height_array)
     # We only need the material array for rendering colors
-    material_array = map_data[1] if isinstance(map_data, tuple) else map_data
+    material_array = map_data[0] if isinstance(map_data, tuple) else map_data
     
     # Reshape the material array to 2D if it's 1D
     if len(material_array.shape) == 1:
