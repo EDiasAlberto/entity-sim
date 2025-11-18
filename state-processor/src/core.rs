@@ -10,16 +10,16 @@ const BASE_BIOME_SCALE: f64 = 0.6;
 
 #[pyclass]
 #[derive(Clone, Copy, Debug)]
-enum Material {
-    Mud,
-    Grass,
-    Ice,
+pub enum Material {
+    Mud = 0,
+    Grass = 1,
+    Ice = 2,
 }
 
 #[derive(IntoPyObject)]
 struct MapPoint {
     height: u8,
-    material: Material
+    material: u8, 
 }
 
 impl fmt::Debug for MapPoint {
@@ -58,21 +58,10 @@ impl Terrain {
         return &(self.map[idx]);
     }
 
-    fn noise_to_height(&self, noise: f64) -> u8 {
+    fn noise_range_change(&self, noise: f64, upper: f64) -> u8 {
         let normalised_noise = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0] 
-        let scaled_height = normalised_noise * (self.depth as f64); 
+        let scaled_height = normalised_noise * upper; 
         scaled_height as u8
-    }
-
-    fn noise_to_biome(&self, noise: f64) -> Material {
-        let normalised_noise = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0] 
-        let chosen_biome = normalised_noise * 4.0; 
-        match chosen_biome as u8 {
-            0 => Material::Mud,
-            1 => Material::Grass,
-            2 => Material::Ice,
-            _ => Material::Grass,
-        }
     }
 
     fn initialise_terrain(&mut self, noise: &Perlin) -> bool {
@@ -84,8 +73,8 @@ impl Terrain {
                 let noise_val = noise.get([x as f64 * scale, y as f64 * scale]);
                 let biome_noise = noise.get([x as f64 * biome_scale, y as f64 * biome_scale]);
                 //println!("Point at {x}, {y} has noise {:.4}", &noise_val);
-                let height_val = Self::noise_to_height(self, noise_val);
-                let material_val = Self::noise_to_biome(self, biome_noise);
+                let height_val = Self::noise_range_change(self, noise_val, (self.depth as f64));
+                let material_val = Self::noise_range_change(self, biome_noise, 4.0);
                 self.map.push(MapPoint {height: height_val, material: material_val});
             }
         }
@@ -107,7 +96,6 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) -> Terrai
     let mut new_terrain = Terrain {width , height, depth, map: vec![]};
     new_terrain.initialise_terrain(&perlin);
     //dbg!(new_terrain);
-    println!("{:#?}", new_terrain);
     new_terrain
 
 }

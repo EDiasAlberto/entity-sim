@@ -10,5 +10,6 @@ fn validate_and_run_terrain_gen(width: u16, height: u16, depth: u8) -> core::Ter
 
 #[pymodule]
 fn state_processor(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(validate_and_run_terrain_gen, m)?)
+    m.add_function(wrap_pyfunction!(validate_and_run_terrain_gen, m)?);
+    Ok(())
 }
