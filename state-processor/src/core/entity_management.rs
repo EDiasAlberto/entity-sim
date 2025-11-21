@@ -45,18 +45,23 @@ impl Entity {
 
         Entity {age: 1, hunger: 0, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male}
     }
+
+    fn update_location(&mut self, new_loc: (u16, u16)) {
+        self.location = new_loc;
+    }
 }
 
 #[derive(IntoPyObject,Debug)]
 pub struct EntityMgmt {
     spawn_area: (u16, u16, u16, u16),
+    area_dims: (u16, u16),
     entities: HashMap<u16, Entity>,
 }
 
 impl EntityMgmt {
 
-    pub fn new(spawn_x_tl: u16, spawn_y_tl: u16, spawn_x_br: u16, spawn_y_br: u16) -> EntityMgmt{
-        EntityMgmt {spawn_area: (spawn_x_tl, spawn_y_tl, spawn_x_br, spawn_y_br), entities: HashMap::new()}
+    pub fn new(spawn_area: (u16, u16, u16, u16), area_dims: (u16, u16)) -> EntityMgmt{
+        EntityMgmt {spawn_area, area_dims, entities: HashMap::new()}
     }
 
     pub fn generate_random_entities(&mut self, count: u8) {
@@ -78,6 +83,19 @@ impl EntityMgmt {
             map.insert(*id, entity.location);
         }
         map
+    }
+
+    pub fn move_entity(&mut self, id: u16, movement: IVec2) -> bool {
+        let relevant_entity: &mut Entity = self.entities.get_mut(&id).unwrap();
+        let curr_pos = IVec2::new(relevant_entity.location.0.into(), relevant_entity.location.1.into());
+
+        let new_pos = (curr_pos + movement);
+        let clamped_pos_x = new_pos.x.clamp(0, self.area_dims.0 as i32);
+        let clamped_pos_y = new_pos.y.clamp(0, self.area_dims.1 as i32);
+        let new_location = (clamped_pos_x.try_into().unwrap(), clamped_pos_y.try_into().unwrap());
+        relevant_entity.update_location(new_location);
+
+        true
     }
 
     fn calculate_pair_magnitude(&self, x: i32, y: i32) -> i32{

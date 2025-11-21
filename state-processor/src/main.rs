@@ -17,9 +17,8 @@ fn validate_and_run_terrain_gen(args: &[String]) {
 }
 
 fn run_entity_gen(_args: &[String]) {
-    let mut mgmt = core::EntityMgmt::new(0,0,100,100);
+    let mut mgmt = core::EntityMgmt::new((0,0,100,100), (800, 800));
     mgmt.generate_random_entities(5);
-    //println!("{:#?}", mgmt);
     let entity_locs = mgmt.get_all_entity_locs();
     for (id, loc) in &entity_locs {
         println!("Entity ID: {}, is at {:#?}", id, loc);
@@ -30,8 +29,13 @@ fn run_entity_gen(_args: &[String]) {
 fn advance_game_state(args: &[String]) {
     let mut gs = core::generate_game_state((800, 800, 10), (200, 200, 400, 400));
     let iterations: u16 = args[2].parse().expect("Failed to parse string to integer");
-    for _ in 0..iterations {
+    for i in 0..iterations {
+        println!("Iteration number: {:#?}", i);
         gs.advance_state();
+        let entity_locs = gs.entity_mgmt.get_all_entity_locs();
+        for (id, loc) in entity_locs {
+            println!("Entity ID: {}, is at {:#?}", id, loc);
+        }
     }
 
 }

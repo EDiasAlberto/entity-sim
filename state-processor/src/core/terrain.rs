@@ -122,6 +122,10 @@ impl Terrain {
         }
     }
 
+    pub fn get_dims(&self) -> (u16, u16) {
+        (self.width, self.height)
+    }
+
     pub fn initialise_terrain(&mut self, noise: &Perlin, biome_noise: &Perlin) -> bool {
         let scale: f64 = BASE_NOISE_SCALE / (self.width as f64 * 0.5);
         let biome_scale = BASE_BIOME_SCALE / (self.width as f64 * 0.5);

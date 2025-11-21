@@ -26,9 +26,9 @@ impl GameState {
             let direction = between.sample(&mut rng);
             let movement_vector = self.entity_mgmt.generate_vector(id, material, direction);
             match movement_vector {
-                Some(vector) => todo!(),
+                Some(vector) => self.entity_mgmt.move_entity(id, vector),
                 None => continue //shouldn't happen, but this means the entity is non-existent
-            }
+            };
         }
 
     }
