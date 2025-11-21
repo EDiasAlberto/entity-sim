@@ -1,7 +1,12 @@
+use crate::core::Terrain;
+use glam::f32::Vec2;
+use glam::u32::UVec2;
+use glam::i32::IVec2;
 use rand::Rng;
 use rand::distr::{Bernoulli, Distribution, Uniform};
 use pyo3::prelude::*;
 use std::collections::HashMap;
+use std::f64::consts::PI;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
@@ -63,7 +68,7 @@ impl EntityMgmt {
             let spawn_loc_x = between_x.sample(&mut rng);
             let spawn_loc_y = between_y.sample(&mut rng);
             let is_male = gender.sample(&mut rng);
-            self.entities.insert((id as u16), Entity::new(2,false, false, (spawn_loc_x, spawn_loc_y), is_male));
+            self.entities.insert((id as u16), Entity::new(30,false, false, (spawn_loc_x, spawn_loc_y), is_male));
         }
     }
 
@@ -75,7 +80,36 @@ impl EntityMgmt {
         map
     }
 
-    pub fn update(&mut self) {
+    fn calculate_pair_magnitude(&self, x: i32, y: i32) -> i32{
+        ((x.pow(2) + y.pow(2)) as f64).sqrt() as i32
+    }
+
+    fn calculate_rotated_components(&self, magnitude: f64, angle: f64) -> (i32, i32){
+        let cos_angle = angle.cos();
+        let sin_angle = angle.sin();
+        let rotated_x = cos_angle*magnitude;
+        let rotated_y = sin_angle*magnitude;
+        (rotated_x as i32, rotated_y as i32)
+    }
+
+    pub fn generate_vector(&self, id: u16, material: u8, direction: f64) -> Option<IVec2>{
+        if !(self.entities.contains_key(&id)) {
+            return None;
+        }
+        let point = self.entities.get(&id).unwrap();
+        
+        let speed = match material {
+            0 => point.ice_speed,
+            1 => point.grass_speed,
+            2 => point.mud_speed,
+            _ => point.grass_speed,
+        };
+        let (x, y) = self.calculate_rotated_components(speed as f64, direction);
+        Some(IVec2::new(x, y))
+
+    }
+
+    pub fn update(&mut self, map: &Terrain) {
         println!("Updated entities!");
     }
 }
