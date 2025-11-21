@@ -1,7 +1,11 @@
+use crate::core::Terrain;
+use glam::f32::Vec2;
+use glam::u32::UVec2;
 use rand::Rng;
 use rand::distr::{Bernoulli, Distribution, Uniform};
 use pyo3::prelude::*;
 use std::collections::HashMap;
+use std::f64::consts::PI;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
@@ -75,7 +79,39 @@ impl EntityMgmt {
         map
     }
 
-    pub fn update(&mut self) {
+    fn calculate_rotated_components(&self, magnitude: f64) -> (u32, u32){
+        let movement = UVec2::new(magnitude as u32, 0);
+        let angle: f64 = rand::random_range(0.0..(2.0*PI));
+        let cos_angle = angle.cos();
+        let sin_angle = angle.sin();
+        let rotated_x = cos_angle*magnitude;
+        let rotated_y = sin_angle*magnitude;
+        (rotated_x as u32, rotated_y as u32)
+    }
+
+    pub fn generate_vector(&self, id: u16, material: u8) -> Option<(u16, u16, u16)>{
+        let rand = rand::rng();
+        if !(self.entities.contains_key(&id)) {
+            return None;
+        }
+        let point = self.entities.get(&id).unwrap();
+        
+        let speed = match material {
+            0 => point.ice_speed,
+            1 => point.grass_speed,
+            2 => point.mud_speed,
+            _ => point.grass_speed,
+        };
+        //let magnitude = (rotated_x.powf(2.0) + rotated_y.powf(2.0)).powf(0.5);
+        let (x, y) = self.calculate_rotated_components(speed as f64);
+        UVec2::new(x, y);
+
+        None
+        
+
+    }
+
+    pub fn update(&mut self, map: &Terrain) {
         println!("Updated entities!");
     }
 }

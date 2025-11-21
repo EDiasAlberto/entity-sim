@@ -15,8 +15,18 @@ impl GameState {
         GameState {time_mgmt: time, terrain_map: terrain, entity_mgmt: entities}
     }
 
+    pub fn move_all_entities(&mut self) {
+        for (id, location) in self.entity_mgmt.get_all_entity_locs() {
+            let (x, y) = location;
+            let material = self.terrain_map.get_material(x, y);
+            let movement_vector = self.entity_mgmt.generate_vector(id, material);
+        }
+
+    }
+
     pub fn advance_state(&mut self) {
         self.time_mgmt.update();
-        self.entity_mgmt.update();
+        self.move_all_entities();
+        self.entity_mgmt.update(&self.terrain_map);
     }
 }

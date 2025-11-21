@@ -92,6 +92,16 @@ impl Terrain {
         return &(self.map[idx]);
     }
 
+    pub fn get_material(&self, x: u16, y: u16) -> u8 {
+        let point = self.get_point(x, y);
+        point.material
+    }
+
+    pub fn get_height(&self, x: u16, y: u16) -> u8 {
+        let point = self.get_point(x, y);
+        point.height
+    }
+
     fn noise_range_change(&self, noise: f64, upper: f64) -> u8 {
         let normalised_noise = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0] 
         let scaled_height = normalised_noise * upper; 
