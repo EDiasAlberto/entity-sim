@@ -64,6 +64,10 @@ impl EntityMgmt {
         EntityMgmt {spawn_area, area_dims, entities: HashMap::new()}
     }
 
+    pub fn get_num_entities(&self) -> usize {
+        self.entities.len()
+    }
+
     pub fn generate_random_entities(&mut self, count: u8) {
         let between_x = Uniform::try_from(self.spawn_area.0..self.spawn_area.2).unwrap();
         let between_y = Uniform::try_from(self.spawn_area.1..self.spawn_area.3).unwrap();

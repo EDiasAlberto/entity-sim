@@ -27,7 +27,7 @@ fn run_entity_gen(_args: &[String]) {
 }
 
 fn advance_game_state(args: &[String]) {
-    let mut gs = core::generate_game_state((800, 800, 10), (200, 200, 400, 400));
+    let mut gs = core::generate_game_state((800, 800, 10), (200, 200, 400, 400), None);
     let iterations: u16 = args[2].parse().expect("Failed to parse string to integer");
     for i in 0..iterations {
         println!("Iteration number: {:#?}", i);
@@ -37,7 +37,6 @@ fn advance_game_state(args: &[String]) {
             println!("Entity ID: {}, is at {:#?}", id, loc);
         }
     }
-
 }
 
 fn main() {
@@ -55,7 +54,6 @@ fn main() {
         "gen-map" => validate_and_run_terrain_gen(&args),
         "gen-entities" => run_entity_gen(&args),
         "gen-state" => advance_game_state(&args),
-        "process-state" => core::process_state(),
         _ => println!("Error, invalid mode!"),
     }
 

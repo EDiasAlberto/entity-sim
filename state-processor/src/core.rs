@@ -47,15 +47,18 @@ pub fn generate_clock(initial_time: Option<u32>) -> TimeMgmt {
     TimeMgmt::new(start_time)
 }
 
-pub fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16)) -> GameState {
+pub fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16), starting_entities: Option<u8>) -> GameState {
     let time = generate_clock(None);
     let terrain = generate_terrain(map_size, None);
-    let entities = generate_entities(spawn_zone, terrain.get_dims(), Some(5));
+    let entities = generate_entities(spawn_zone, terrain.get_dims(), starting_entities);
     let mut gs = GameState::new(time, terrain, entities);
     gs
 }
 
-pub fn process_state() {
-    //TODO
+pub fn process_state(mut gs: GameState, steps: Option<u8>) -> GameState{
     println!("Processing passed state");
+    for i in 0..steps.unwrap_or(1) {
+        gs.advance_state();
+    }
+    gs
 }
