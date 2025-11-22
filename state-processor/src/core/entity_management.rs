@@ -121,9 +121,9 @@ impl EntityMgmt {
         let point = self.entities.get(&id).unwrap();
         
         let speed = match material {
-            0 => point.ice_speed,
+            0 => point.mud_speed,
             1 => point.grass_speed,
-            2 => point.mud_speed,
+            2 => point.ice_speed,
             _ => point.grass_speed,
         };
         let (x, y) = self.calculate_rotated_components(speed as f64, direction);
