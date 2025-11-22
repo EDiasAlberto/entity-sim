@@ -181,11 +181,10 @@ impl EntityMgmt {
  
     // iterate over all entities, age up one year, attempt death
     fn age_all_entities(&mut self) {
-        for (id, entity) in &mut self.entities {
+        for (_id, entity) in &mut self.entities {
             if entity.is_alive {
                 entity.grow_older(1);
                 entity.do_death_check();
-                }
             }
         }
     }

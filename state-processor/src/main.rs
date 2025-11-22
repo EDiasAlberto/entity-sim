@@ -11,7 +11,7 @@ fn validate_and_run_terrain_gen(args: &[String]) {
     assert_lt!(args.len(), 4);                            // Shouldn't have nonsense
     println!("{}", args.len());
     if args.len() == 2 {
-        core::generate_terrain((100, 100, 10), None);
+        core::generate_terrain((100, 100, 20), None);
 
     }
 }
