@@ -30,15 +30,11 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) -> Terrai
 
 }
 
-pub fn generate_entities(spawn_zone: (u16, u16, u16, u16), amount: Option<u8>) -> EntityMgmt {
+pub fn generate_entities(spawn_zone: (u16, u16, u16, u16), terrain_dims: (u16, u16), amount: Option<u8>) -> EntityMgmt {
     println!("Generating entities!");
-    let (x1, y1, x2, y2) = spawn_zone;
-    let num_entities = match amount {
-        Some(x) => x,
-        None => 15,
-    };
+    let num_entities = amount.unwrap_or(15);
 
-    let mut mgmt = EntityMgmt::new(x1, y1, x2, y2);
+    let mut mgmt = EntityMgmt::new(spawn_zone, terrain_dims);
     mgmt.generate_random_entities(num_entities);
     mgmt
 }
@@ -51,16 +47,20 @@ pub fn generate_clock(initial_time: Option<u32>) -> TimeMgmt {
     TimeMgmt::new(start_time)
 }
 
-pub fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16)) -> GameState {
+pub fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16), starting_entities: Option<u8>) -> GameState {
     let time = generate_clock(None);
     let terrain = generate_terrain(map_size, None);
-    let entities = generate_entities(spawn_zone, None);
-    let mut gs = GameState::new(time, terrain, entities);
-    gs.entity_mgmt.generate_random_entities(10);
+    let entities = generate_entities(spawn_zone, terrain.get_dims(), starting_entities);
+    let gs = GameState::new(time, terrain, entities);
     gs
 }
 
-pub fn process_state() {
-    //TODO
+/*
+pub fn process_state(mut gs: GameState, steps: Option<u8>) -> GameState{
     println!("Processing passed state");
+    for i in 0..steps.unwrap_or(1) {
+        gs.advance_state();
+    }
+    gs
 }
+*/

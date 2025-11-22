@@ -1,12 +1,8 @@
 use crate::core::Terrain;
-use glam::f32::Vec2;
-use glam::u32::UVec2;
 use glam::i32::IVec2;
-use rand::Rng;
 use rand::distr::{Bernoulli, Distribution, Uniform};
 use pyo3::prelude::*;
 use std::collections::HashMap;
-use std::f64::consts::PI;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
@@ -45,18 +41,27 @@ impl Entity {
 
         Entity {age: 1, hunger: 0, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male}
     }
+
+    fn update_location(&mut self, new_loc: (u16, u16)) {
+        self.location = new_loc;
+    }
 }
 
 #[derive(IntoPyObject,Debug)]
 pub struct EntityMgmt {
     spawn_area: (u16, u16, u16, u16),
+    area_dims: (u16, u16),
     entities: HashMap<u16, Entity>,
 }
 
 impl EntityMgmt {
 
-    pub fn new(spawn_x_tl: u16, spawn_y_tl: u16, spawn_x_br: u16, spawn_y_br: u16) -> EntityMgmt{
-        EntityMgmt {spawn_area: (spawn_x_tl, spawn_y_tl, spawn_x_br, spawn_y_br), entities: HashMap::new()}
+    pub fn new(spawn_area: (u16, u16, u16, u16), area_dims: (u16, u16)) -> EntityMgmt{
+        EntityMgmt {spawn_area, area_dims, entities: HashMap::new()}
+    }
+
+    pub fn get_num_entities(&self) -> usize {
+        self.entities.len()
     }
 
     pub fn generate_random_entities(&mut self, count: u8) {
@@ -68,7 +73,7 @@ impl EntityMgmt {
             let spawn_loc_x = between_x.sample(&mut rng);
             let spawn_loc_y = between_y.sample(&mut rng);
             let is_male = gender.sample(&mut rng);
-            self.entities.insert((id as u16), Entity::new(30,false, false, (spawn_loc_x, spawn_loc_y), is_male));
+            self.entities.insert(id as u16, Entity::new(30,false, false, (spawn_loc_x, spawn_loc_y), is_male));
         }
     }
 
@@ -80,9 +85,24 @@ impl EntityMgmt {
         map
     }
 
+    pub fn move_entity(&mut self, id: u16, movement: IVec2) -> bool {
+        let relevant_entity: &mut Entity = self.entities.get_mut(&id).unwrap();
+        let curr_pos = IVec2::new(relevant_entity.location.0.into(), relevant_entity.location.1.into());
+
+        let new_pos = curr_pos + movement;
+        let clamped_pos_x = new_pos.x.clamp(0, self.area_dims.0 as i32);
+        let clamped_pos_y = new_pos.y.clamp(0, self.area_dims.1 as i32);
+        let new_location = (clamped_pos_x.try_into().unwrap(), clamped_pos_y.try_into().unwrap());
+        relevant_entity.update_location(new_location);
+
+        true
+    }
+    
+/*
     fn calculate_pair_magnitude(&self, x: i32, y: i32) -> i32{
         ((x.pow(2) + y.pow(2)) as f64).sqrt() as i32
     }
+*/
 
     fn calculate_rotated_components(&self, magnitude: f64, angle: f64) -> (i32, i32){
         let cos_angle = angle.cos();
@@ -99,9 +119,9 @@ impl EntityMgmt {
         let point = self.entities.get(&id).unwrap();
         
         let speed = match material {
-            0 => point.ice_speed,
+            0 => point.mud_speed,
             1 => point.grass_speed,
-            2 => point.mud_speed,
+            2 => point.ice_speed,
             _ => point.grass_speed,
         };
         let (x, y) = self.calculate_rotated_components(speed as f64, direction);
@@ -109,7 +129,9 @@ impl EntityMgmt {
 
     }
 
-    pub fn update(&mut self, map: &Terrain) {
+    // call for other functions to use to update the state of stored entities (e.g. on event
+    // occurring)
+    pub fn update(&mut self, _map: &Terrain) {
         println!("Updated entities!");
     }
 }
