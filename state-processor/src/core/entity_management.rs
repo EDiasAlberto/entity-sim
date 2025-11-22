@@ -15,6 +15,9 @@ const PROFICIENT_MUD_SCALAR: f64 = 0.8;
 const BASE_ICE_SCALAR: f64 = 0.4;
 const PROFICIENT_ICE_SCALAR: f64 = 0.7;
 
+const DEFAULT_ENTITY_EXPECTANCY: u8 = 15;
+const DEFAULT_TIME_STEPS: u8 = 1;
+
 #[derive(IntoPyObject,Debug)]
 pub struct Entity {
     age: u8,
@@ -95,7 +98,7 @@ impl EntityMgmt {
         let between_x = Uniform::try_from(self.spawn_area.0..self.spawn_area.2).unwrap();
         let between_y = Uniform::try_from(self.spawn_area.1..self.spawn_area.3).unwrap();
         let gender = Bernoulli::new(0.5).unwrap();
-        let expectancy = life_exp.unwrap_or(20);
+        let expectancy = life_exp.unwrap_or(DEFAULT_ENTITY_EXPECTANCY);
         let death_distr = WeibullDeath::new(expectancy);
         let mut rng = rand::rng();
         for id in 0..count {
@@ -181,8 +184,7 @@ impl EntityMgmt {
         for (id, entity) in &mut self.entities {
             if entity.is_alive {
                 entity.grow_older(1);
-                if entity.do_death_check() {
-                    println!("Entity of id {:#?} died", id);
+                entity.do_death_check();
                 }
             }
         }
@@ -191,7 +193,7 @@ impl EntityMgmt {
     // use to update the state of stored entities (e.g. on event
     // occurring)
     pub fn advance_time(&mut self, map: &Terrain, steps: Option<u8>) {
-        let num_steps = steps.unwrap_or(1);
+        let num_steps = steps.unwrap_or(DEFAULT_TIME_STEPS);
         for _ in 0..num_steps {
             self.random_move_all_entities(map);
             self.age_all_entities();
