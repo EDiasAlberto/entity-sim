@@ -18,14 +18,6 @@ impl GameState {
         GameState {time_mgmt: time, terrain_map: terrain, entity_mgmt: entities}
     }
 
-}
-
-#[pymethods]
-impl GameState {
-    pub fn get_terrain_map(&self) -> (u16, u16) {
-        self.terrain_map.get_dims()
-    }
-
     pub fn move_all_entities(&mut self) {
         let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
         let mut rng = rand::rng();
@@ -39,8 +31,15 @@ impl GameState {
                 None => continue //shouldn't happen, but this means the entity is non-existent
             };
         }
-
     }
+}
+
+#[pymethods]
+impl GameState {
+    pub fn get_terrain_map(&self) -> (u16, u16) {
+        self.terrain_map.get_dims()
+    }
+
 
     fn get_entity_locations<'py>(&self, py: Python<'py>) -> PyResult<(Bound<'py, PyArray2<u16>>)> {
         let num_entities = self.entity_mgmt.get_num_entities();
