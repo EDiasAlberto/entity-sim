@@ -18,6 +18,7 @@ pub struct WeibullDeath {
 
 impl WeibullDeath {
 
+    // f(x) = 0, when x==mean of the weibull data
     fn f(k: f64, sigma2: f64, mu2: f64) -> f64 {
         let a = 1.0 + 2.0 / k;
         let b = 1.0 + 1.0 / k;
@@ -25,6 +26,7 @@ impl WeibullDeath {
         sigma2 / mu2 - h + 1.0
     }
 
+    // calculate weibull shape and scale from mean and standard deviation
     fn calculate_coefficients(exp: u8, std_dev: u8) -> Result<(f64, f64), SearchError> {
         let mu = exp as f64;
         let sigma = std_dev as f64;
