@@ -37,21 +37,18 @@ def render_terrain(game_state, colour_dict, terrain_width, terrain_height):
     return surf
 
 
-def render_entities(surface, game_state, entity_color=(255, 255, 0), entity_size=3):
-    """
-    Draws entities on top of the terrain surface.
-    
-    Args:
-        surface: pygame.Surface to draw entities on
-        entity_mgmt: Dictionary containing entity management data with 'entities'
-        entity_color: RGB color tuple for entities (default: yellow)
-        entity_size: Radius of entity circles in pixels (default: 3)
-    """
+def render_entities(game_state, width, height, entity_color=(255, 255, 0), entity_size=3):
+    BACKGROUND = (0,0,0)
     entities = gs.get_entity_locations() 
+    surf = pygame.Surface((height, width))
+    surf.fill(BACKGROUND)
+    surf.set_colorkey(BACKGROUND)
     
     for entity_id, x, y in entities:
         # Draw entity as a circle
-        pygame.draw.circle(surface, entity_color, (int(x), int(y)), entity_size)
+        pygame.draw.circle(surf, entity_color, (int(x), int(y)), entity_size)
+
+    return surf
 
 
 # Initialize game state
@@ -74,7 +71,7 @@ clock = pygame.time.Clock()
 terrain_surface = render_terrain(gs, colour_dict, WIDTH, HEIGHT)
 
 # Render entities on top of terrain
-render_entities(terrain_surface, gs)
+entity_surface = render_entities(gs, WIDTH, HEIGHT)
 
 # Game loop
 running = True
@@ -84,9 +81,13 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE: 
+                gs.advance_state()
+                entity_surface = render_entities(gs, WIDTH, HEIGHT)
     screen.fill((0, 0, 0))
     screen.blit(terrain_surface, (0, 0))
+    screen.blit(entity_surface, (0, 0))
     
     pygame.display.update()
             
