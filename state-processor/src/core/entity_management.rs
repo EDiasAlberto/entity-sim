@@ -1,12 +1,8 @@
 use crate::core::Terrain;
-use glam::f32::Vec2;
-use glam::u32::UVec2;
 use glam::i32::IVec2;
-use rand::Rng;
 use rand::distr::{Bernoulli, Distribution, Uniform};
 use pyo3::prelude::*;
 use std::collections::HashMap;
-use std::f64::consts::PI;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
@@ -77,7 +73,7 @@ impl EntityMgmt {
             let spawn_loc_x = between_x.sample(&mut rng);
             let spawn_loc_y = between_y.sample(&mut rng);
             let is_male = gender.sample(&mut rng);
-            self.entities.insert((id as u16), Entity::new(30,false, false, (spawn_loc_x, spawn_loc_y), is_male));
+            self.entities.insert(id as u16, Entity::new(30,false, false, (spawn_loc_x, spawn_loc_y), is_male));
         }
     }
 
@@ -93,7 +89,7 @@ impl EntityMgmt {
         let relevant_entity: &mut Entity = self.entities.get_mut(&id).unwrap();
         let curr_pos = IVec2::new(relevant_entity.location.0.into(), relevant_entity.location.1.into());
 
-        let new_pos = (curr_pos + movement);
+        let new_pos = curr_pos + movement;
         let clamped_pos_x = new_pos.x.clamp(0, self.area_dims.0 as i32);
         let clamped_pos_y = new_pos.y.clamp(0, self.area_dims.1 as i32);
         let new_location = (clamped_pos_x.try_into().unwrap(), clamped_pos_y.try_into().unwrap());
@@ -101,10 +97,12 @@ impl EntityMgmt {
 
         true
     }
-
+    
+/*
     fn calculate_pair_magnitude(&self, x: i32, y: i32) -> i32{
         ((x.pow(2) + y.pow(2)) as f64).sqrt() as i32
     }
+*/
 
     fn calculate_rotated_components(&self, magnitude: f64, angle: f64) -> (i32, i32){
         let cos_angle = angle.cos();
@@ -131,7 +129,9 @@ impl EntityMgmt {
 
     }
 
-    pub fn update(&mut self, map: &Terrain) {
+    // call for other functions to use to update the state of stored entities (e.g. on event
+    // occurring)
+    pub fn update(&mut self, _map: &Terrain) {
         println!("Updated entities!");
     }
 }

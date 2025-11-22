@@ -16,7 +16,7 @@ fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16
 
 #[pymodule]
 fn state_processor(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(run_terrain_gen, m)?);
-    m.add_function(wrap_pyfunction!(generate_game_state, m)?);
+    let _ = m.add_function(wrap_pyfunction!(run_terrain_gen, m)?);
+    let _ = m.add_function(wrap_pyfunction!(generate_game_state, m)?);
     Ok(())
 }

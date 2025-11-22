@@ -1,7 +1,7 @@
 use crate::core::Terrain;
 use crate::core::EntityMgmt;
 use crate::core::TimeMgmt;
-use numpy::{PyArray2, PyArray1, PyArrayMethods};
+use numpy::{PyArray2, PyArrayMethods};
 use pyo3::prelude::*;
 use rand::distr::{Distribution, Uniform};
 use std::f64::consts::PI;
@@ -41,10 +41,10 @@ impl GameState {
     }
 
 
-    fn get_entity_locations<'py>(&self, py: Python<'py>) -> PyResult<(Bound<'py, PyArray2<u16>>)> {
+    fn get_entity_locations<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArray2<u16>>> {
         let num_entities = self.entity_mgmt.get_num_entities();
         let map = self.entity_mgmt.get_all_entity_locs();
-        let mut rows: Vec<Vec<u16>> = Vec::with_capacity(map.len());
+        let mut rows: Vec<Vec<u16>> = Vec::with_capacity(num_entities);
 
         for (id, (a, b)) in map {
             rows.push(vec![id as u16, a, b]);

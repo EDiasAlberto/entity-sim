@@ -1,5 +1,4 @@
 use noise::{Perlin, NoiseFn};
-use numpy::{PyArray2, PyArray1, PyArrayMethods};
 use pyo3::prelude::*;
 use std::fmt;
 
@@ -68,7 +67,7 @@ impl Terrain {
     }
 
     pub fn get_point(&self, x: u16, y: u16) -> &MapPoint {
-        let idx: usize = ((y as usize * self.width as usize) + (x as usize));
+        let idx: usize = (y as usize * self.width as usize) + (x as usize);
         return &(self.map[idx]);
     }
 
