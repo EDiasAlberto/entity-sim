@@ -95,7 +95,7 @@ impl EntityMgmt {
         let between_x = Uniform::try_from(self.spawn_area.0..self.spawn_area.2).unwrap();
         let between_y = Uniform::try_from(self.spawn_area.1..self.spawn_area.3).unwrap();
         let gender = Bernoulli::new(0.5).unwrap();
-        let expectancy = life_exp.unwrap_or(70);
+        let expectancy = life_exp.unwrap_or(20);
         let death_distr = WeibullDeath::new(expectancy);
         let mut rng = rand::rng();
         for id in 0..count {
@@ -174,11 +174,12 @@ impl EntityMgmt {
  
     // iterate over all entities, age up one year, attempt death
     fn age_all_entities(&mut self) {
-        for (_id, entity) in &mut self.entities {
+        for (id, entity) in &mut self.entities {
             entity.grow_older(1);
-            entity.do_death_check();
+            if entity.do_death_check() {
+                println!("Entity of id {:#?} died", id);
+            }
         }
-
     }
 
     // use to update the state of stored entities (e.g. on event
@@ -187,6 +188,7 @@ impl EntityMgmt {
         let num_steps = steps.unwrap_or(1);
         for _ in 0..num_steps {
             self.random_move_all_entities(map);
+            self.age_all_entities();
         }
         
     }
