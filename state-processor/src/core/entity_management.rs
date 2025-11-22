@@ -61,7 +61,7 @@ impl Entity {
 
     fn do_death_check(&mut self) -> bool {
         self.is_alive = self.age <= self.death_age;
-        self.is_alive
+        !self.is_alive
     }
 }
 
@@ -114,6 +114,10 @@ impl EntityMgmt {
         map
     }
 
+    pub fn is_entity_alive(&self, id: u16) -> bool {
+        self.entities.get(&id).unwrap().is_alive
+    }
+
     fn clamp_entity_movement(map_dims: (u16, u16), curr_pos: (u16, u16), movement: IVec2) -> (u16, u16) {
         let curr_vec = IVec2::new(curr_pos.0.into(), curr_pos.1.into());
         let new_pos = curr_vec + movement;
@@ -157,14 +161,14 @@ impl EntityMgmt {
         let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
         let mut rng = rand::rng();
         for (_id, entity) in &mut self.entities {
-            let new_location = {
+            if entity.is_alive {
                 let (x, y) = entity.location;
                 let material = map.get_material(x, y);
                 let direction = between.sample(&mut rng);
                 let movement_vector = Self::generate_vector(entity, material, direction);
-                Self::clamp_entity_movement(self.area_dims, (x, y), movement_vector)
-            };
-            entity.update_location(new_location);
+                let new_location = Self::clamp_entity_movement(self.area_dims, (x, y), movement_vector);
+                entity.update_location(new_location);
+            }
         }
     }
 
@@ -175,9 +179,11 @@ impl EntityMgmt {
     // iterate over all entities, age up one year, attempt death
     fn age_all_entities(&mut self) {
         for (id, entity) in &mut self.entities {
-            entity.grow_older(1);
-            if entity.do_death_check() {
-                println!("Entity of id {:#?} died", id);
+            if entity.is_alive {
+                entity.grow_older(1);
+                if entity.do_death_check() {
+                    println!("Entity of id {:#?} died", id);
+                }
             }
         }
     }

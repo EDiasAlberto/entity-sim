@@ -44,9 +44,10 @@ def render_entities(game_state, width, height, entity_color=(255, 255, 0), entit
     surf.fill(BACKGROUND)
     surf.set_colorkey(BACKGROUND)
     
-    for entity_id, x, y in entities:
+    for entity_id, x, y, is_alive in entities:
         # Draw entity as a circle
-        pygame.draw.circle(surf, entity_color, (int(x), int(y)), entity_size)
+        render_color = entity_color if is_alive else (255, 0, 255)
+        pygame.draw.circle(surf, render_color, (int(x), int(y)), entity_size)
 
     return surf
 
