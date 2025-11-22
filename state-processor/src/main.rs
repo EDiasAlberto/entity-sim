@@ -11,14 +11,14 @@ fn validate_and_run_terrain_gen(args: &[String]) {
     assert_lt!(args.len(), 4);                            // Shouldn't have nonsense
     println!("{}", args.len());
     if args.len() == 2 {
-        core::generate_terrain((100, 100, 10), None);
+        core::generate_terrain((100, 100, 20), None);
 
     }
 }
 
 fn run_entity_gen(_args: &[String]) {
     let mut mgmt = core::EntityMgmt::new((0,0,100,100), (800, 800));
-    mgmt.generate_random_entities(5);
+    mgmt.generate_random_entities(5, None, None);
     let entity_locs = mgmt.get_all_entity_locs();
     for (id, loc) in &entity_locs {
         println!("Entity ID: {}, is at {:#?}", id, loc);

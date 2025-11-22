@@ -4,38 +4,28 @@ import state_processor as sp
 
 
 def render_terrain(game_state, colour_dict, terrain_width, terrain_height):
-    
-    # Get the map data as a tuple of numpy arrays (height_array, material_array)
-    map_data = game_state.get_map_data()
-    
-    # map_data is a tuple of numpy arrays: (material_array, height_array)
-    # We only need the material array for rendering colors
-    material_array = map_data[0] if isinstance(map_data, tuple) else map_data
-    
-    # Reshape the material array to 2D if it's 1D
-    if len(material_array.shape) == 1:
-        material_array = material_array.reshape((terrain_height, terrain_width))
-    
-    # Create numpy array for terrain colors (RGB)
-    terrain_array = np.zeros((terrain_height, terrain_width, 3), dtype=np.uint8)
-    
-    # Map each material ID to its corresponding color
-    for material_id, color in colour_dict.items():
-        mask = material_array == material_id
-        terrain_array[mask] = color
-    
-    # Create surface and blit the terrain
-    cellsize = 1
-    width = terrain_array.shape[1] * cellsize
-    height = terrain_array.shape[0] * cellsize
-    
-    surf = pygame.Surface((terrain_array.shape[1], terrain_array.shape[0]))
-    # Note: pygame expects (width, height) ordering, numpy uses (height, width)
-    pygame.surfarray.blit_array(surf, np.transpose(terrain_array, (1, 0, 2)))
-    surf = pygame.transform.scale(surf, (width, height))
-    
-    return surf
+    material_array, height_array = game_state.get_map_data()
 
+    if material_array.ndim == 1:
+        material_array = material_array.reshape((terrain_height, terrain_width))
+        height_array = height_array.reshape((terrain_height, terrain_width))
+
+    # Normalize heights 0–1
+    h_min, h_max = height_array.min(), height_array.max()
+    heights_norm = (height_array - h_min) / (h_max - h_min + 1e-9)
+
+    terrain_array = np.zeros((terrain_height, terrain_width, 3), dtype=np.uint8)
+
+    for material_id, base_color in colour_dict.items():
+        mask = (material_array == material_id)
+        brightness = 0.55 + heights_norm[mask] * 0.45  
+        colour = (np.array(base_color)[None, :] * brightness[:, None]).clip(0, 255)
+        terrain_array[mask] = colour.astype(np.uint8)
+
+    surf = pygame.Surface((terrain_width, terrain_height))
+    pygame.surfarray.blit_array(surf, np.transpose(terrain_array, (1, 0, 2)))
+
+    return surf
 
 def render_entities(game_state, width, height, entity_color=(255, 255, 0), entity_size=3):
     BACKGROUND = (0,0,0)
@@ -44,15 +34,16 @@ def render_entities(game_state, width, height, entity_color=(255, 255, 0), entit
     surf.fill(BACKGROUND)
     surf.set_colorkey(BACKGROUND)
     
-    for entity_id, x, y in entities:
+    for entity_id, x, y, is_alive in entities:
         # Draw entity as a circle
-        pygame.draw.circle(surf, entity_color, (int(x), int(y)), entity_size)
+        render_color = entity_color if is_alive else (255, 0, 255)
+        pygame.draw.circle(surf, render_color, (int(x), int(y)), entity_size)
 
     return surf
 
 
 # Initialize game state
-gs = sp.generate_game_state((800, 800, 10), (200, 200, 400, 400), 3)
+gs = sp.generate_game_state((800, 800, 10), (100, 100, 500, 500), 5)
 
 # Define material colors
 colour_dict = {

@@ -30,7 +30,8 @@ impl GameState {
         let mut rows: Vec<Vec<u16>> = Vec::with_capacity(num_entities);
 
         for (id, (a, b)) in map {
-            rows.push(vec![id as u16, a, b]);
+            let is_alive = self.entity_mgmt.is_entity_alive(id) as u16;
+            rows.push(vec![id as u16, a, b, is_alive]);
         }
         
         Ok(PyArray2::from_vec2(py, &rows).unwrap().to_owned())

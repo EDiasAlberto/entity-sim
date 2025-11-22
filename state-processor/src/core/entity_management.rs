@@ -5,16 +5,27 @@ use pyo3::prelude::*;
 use std::collections::HashMap;
 use std::f64::consts::PI;
 
+mod death_calculations;
+
+use death_calculations::{DeathCalc, WeibullDeath};
+
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
 
 const BASE_ICE_SCALAR: f64 = 0.4;
 const PROFICIENT_ICE_SCALAR: f64 = 0.7;
 
+const DEFAULT_ENTITY_EXPECTANCY: u8 = 70;
+const DEFAULT_LIFE_STD_DEV: u8 = 15;
+const DEFAULT_NUM_RANDOM_ENTITIES: u8 = 20;
+const DEFAULT_TIME_STEPS: u8 = 1;
+
 #[derive(IntoPyObject,Debug)]
 pub struct Entity {
     age: u8,
+    death_age: u8,
     hunger: u8,
+    is_alive: bool,
     is_male: bool,
     is_pregnant: bool,
     grass_speed: u8,
@@ -24,7 +35,7 @@ pub struct Entity {
 }
 
 impl Entity {
-    fn new(base_speed: u8, is_climber: bool, is_skater: bool, location: (u16, u16), is_male: bool) -> Entity {
+    fn new(base_speed: u8, is_climber: bool, is_skater: bool, location: (u16, u16), is_male: bool, death_distr: &impl DeathCalc) -> Entity {
         let grass_speed: f64 = base_speed.into();
         let mud_speed: f64;
         let ice_speed: f64;
@@ -40,11 +51,23 @@ impl Entity {
             ice_speed = grass_speed * BASE_ICE_SCALAR;
         }
 
-        Entity {age: 1, hunger: 0, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male}
+        let death_age = death_distr.get_death_age();
+        //println!("DYING AT: {}", death_age);
+
+        Entity {age: 1, hunger: 0, is_alive: true, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male, death_age}
     }
 
     fn update_location(&mut self, new_loc: (u16, u16)) {
         self.location = new_loc;
+    }
+
+    fn grow_older(&mut self, age_increase: u8) {
+        self.age = self.age + age_increase;
+    }
+
+    fn do_death_check(&mut self) -> bool {
+        self.is_alive = self.age <= self.death_age;
+        !self.is_alive
     }
 }
 
@@ -74,16 +97,19 @@ impl EntityMgmt {
         self.entities.len()
     }
 
-    pub fn generate_random_entities(&mut self, count: u8) {
+    pub fn generate_random_entities(&mut self, count: u16, life_exp: Option<u8>, life_std_dev: Option<u8>) {
         let between_x = Uniform::try_from(self.spawn_area.0..self.spawn_area.2).unwrap();
         let between_y = Uniform::try_from(self.spawn_area.1..self.spawn_area.3).unwrap();
         let gender = Bernoulli::new(0.5).unwrap();
+        let expectancy = life_exp.unwrap_or(DEFAULT_ENTITY_EXPECTANCY);
+        let deviation = life_exp.unwrap_or(DEFAULT_LIFE_STD_DEV);
+        let death_distr = WeibullDeath::new(expectancy, deviation);
         let mut rng = rand::rng();
         for id in 0..count {
             let spawn_loc_x = between_x.sample(&mut rng);
             let spawn_loc_y = between_y.sample(&mut rng);
             let is_male = gender.sample(&mut rng);
-            self.entities.insert(id as u16, Entity::new(30,false, false, (spawn_loc_x, spawn_loc_y), is_male));
+            self.entities.insert(id as u16, Entity::new(30,false, false, (spawn_loc_x, spawn_loc_y), is_male, &death_distr));
         }
     }
 
@@ -95,6 +121,9 @@ impl EntityMgmt {
         map
     }
 
+    pub fn is_entity_alive(&self, id: u16) -> bool {
+        self.entities.get(&id).unwrap().is_alive
+    }
 
     fn clamp_entity_movement(map_dims: (u16, u16), curr_pos: (u16, u16), movement: IVec2) -> (u16, u16) {
         let curr_vec = IVec2::new(curr_pos.0.into(), curr_pos.1.into());
@@ -139,23 +168,38 @@ impl EntityMgmt {
         let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
         let mut rng = rand::rng();
         for (_id, entity) in &mut self.entities {
-            let new_location = {
+            if entity.is_alive {
                 let (x, y) = entity.location;
                 let material = map.get_material(x, y);
                 let direction = between.sample(&mut rng);
                 let movement_vector = Self::generate_vector(entity, material, direction);
-                Self::clamp_entity_movement(self.area_dims, (x, y), movement_vector)
-            };
-            entity.update_location(new_location);
+                let new_location = Self::clamp_entity_movement(self.area_dims, (x, y), movement_vector);
+                entity.update_location(new_location);
+            }
         }
     }
 
-    // call for other functions to use to update the state of stored entities (e.g. on event
+    fn random_move_random_entities(&mut self, _map: &Terrain) {
+        println!("Moving some entities randomly!");
+    }
+ 
+    // iterate over all entities, age up one year, attempt death
+    fn age_all_entities(&mut self) {
+        for (_id, entity) in &mut self.entities {
+            if entity.is_alive {
+                entity.grow_older(1);
+                entity.do_death_check();
+            }
+        }
+    }
+
+    // use to update the state of stored entities (e.g. on event
     // occurring)
     pub fn advance_time(&mut self, map: &Terrain, steps: Option<u8>) {
-        let num_steps = steps.unwrap_or(1);
+        let num_steps = steps.unwrap_or(DEFAULT_TIME_STEPS);
         for _ in 0..num_steps {
             self.random_move_all_entities(map);
+            self.age_all_entities();
         }
         
     }
