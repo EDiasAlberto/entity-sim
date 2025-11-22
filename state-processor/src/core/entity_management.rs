@@ -3,6 +3,7 @@ use glam::i32::IVec2;
 use rand::distr::{Bernoulli, Distribution, Uniform};
 use pyo3::prelude::*;
 use std::collections::HashMap;
+use std::f64::consts::PI;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
@@ -60,6 +61,15 @@ impl EntityMgmt {
         EntityMgmt {spawn_area, area_dims, entities: HashMap::new()}
     }
 
+    fn entity_speed_given_material(entity: &Entity, material: u8) -> u8 {
+        match material {
+            0 => entity.mud_speed,
+            1 => entity.grass_speed,
+            2 => entity.ice_speed,
+            _ => entity.grass_speed,
+        }
+    }
+
     pub fn get_num_entities(&self) -> usize {
         self.entities.len()
     }
@@ -85,26 +95,39 @@ impl EntityMgmt {
         map
     }
 
-    pub fn move_entity(&mut self, id: u16, movement: IVec2) -> bool {
-        let relevant_entity: &mut Entity = self.entities.get_mut(&id).unwrap();
-        let curr_pos = IVec2::new(relevant_entity.location.0.into(), relevant_entity.location.1.into());
 
-        let new_pos = curr_pos + movement;
-        let clamped_pos_x = new_pos.x.clamp(0, self.area_dims.0 as i32);
-        let clamped_pos_y = new_pos.y.clamp(0, self.area_dims.1 as i32);
-        let new_location = (clamped_pos_x.try_into().unwrap(), clamped_pos_y.try_into().unwrap());
+    fn clamp_entity_movement(map_dims: (u16, u16), curr_pos: (u16, u16), movement: IVec2) -> (u16, u16) {
+        let curr_vec = IVec2::new(curr_pos.0.into(), curr_pos.1.into());
+        let new_pos = curr_vec + movement;
+        let clamped_pos_x = new_pos.x.clamp(0, map_dims.0 as i32);
+        let clamped_pos_y = new_pos.y.clamp(0, map_dims.1 as i32);
+        (clamped_pos_x.try_into().unwrap(), clamped_pos_y.try_into().unwrap())
+    }
+
+    pub fn get_and_move_entity(&mut self, id: u16, movement: IVec2) -> bool { 
+        let relevant_entity: &mut Entity = self.entities.get_mut(&id).unwrap();
+        let new_location = {
+            let loc = relevant_entity.location;
+            Self::clamp_entity_movement(self.area_dims, loc, movement)
+        };
         relevant_entity.update_location(new_location);
 
         true
     }
     
-/*
+    /*
     fn calculate_pair_magnitude(&self, x: i32, y: i32) -> i32{
         ((x.pow(2) + y.pow(2)) as f64).sqrt() as i32
     }
-*/
+    */
 
-    fn calculate_rotated_components(&self, magnitude: f64, angle: f64) -> (i32, i32){
+    fn generate_vector(entity: &Entity, material: u8, direction: f64) -> IVec2 {
+        let speed = Self::entity_speed_given_material(entity, material);
+        let (rot_x, rot_y) = Self::calculate_rotated_components(speed as f64, direction);
+        IVec2::new(rot_x, rot_y)
+    }
+
+    fn calculate_rotated_components(magnitude: f64, angle: f64) -> (i32, i32){
         let cos_angle = angle.cos();
         let sin_angle = angle.sin();
         let rotated_x = cos_angle*magnitude;
@@ -112,26 +135,28 @@ impl EntityMgmt {
         (rotated_x as i32, rotated_y as i32)
     }
 
-    pub fn generate_vector(&self, id: u16, material: u8, direction: f64) -> Option<IVec2>{
-        if !(self.entities.contains_key(&id)) {
-            return None;
+    fn random_move_all_entities(&mut self, map: &Terrain) {
+        let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
+        let mut rng = rand::rng();
+        for (_id, entity) in &mut self.entities {
+            let new_location = {
+                let (x, y) = entity.location;
+                let material = map.get_material(x, y);
+                let direction = between.sample(&mut rng);
+                let movement_vector = Self::generate_vector(entity, material, direction);
+                Self::clamp_entity_movement(self.area_dims, (x, y), movement_vector)
+            };
+            entity.update_location(new_location);
         }
-        let point = self.entities.get(&id).unwrap();
-        
-        let speed = match material {
-            0 => point.mud_speed,
-            1 => point.grass_speed,
-            2 => point.ice_speed,
-            _ => point.grass_speed,
-        };
-        let (x, y) = self.calculate_rotated_components(speed as f64, direction);
-        Some(IVec2::new(x, y))
-
     }
 
     // call for other functions to use to update the state of stored entities (e.g. on event
     // occurring)
-    pub fn update(&mut self, _map: &Terrain) {
-        println!("Updated entities!");
+    pub fn advance_time(&mut self, map: &Terrain, steps: Option<u8>) {
+        let num_steps = steps.unwrap_or(1);
+        for _ in 0..num_steps {
+            self.random_move_all_entities(map);
+        }
+        
     }
 }
