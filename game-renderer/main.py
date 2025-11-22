@@ -43,7 +43,7 @@ def render_entities(game_state, width, height, entity_color=(255, 255, 0), entit
 
 
 # Initialize game state
-gs = sp.generate_game_state((800, 800, 10), (200, 200, 400, 400), 3)
+gs = sp.generate_game_state((800, 800, 10), (100, 100, 500, 500), 5)
 
 # Define material colors
 colour_dict = {

@@ -15,7 +15,9 @@ const PROFICIENT_MUD_SCALAR: f64 = 0.8;
 const BASE_ICE_SCALAR: f64 = 0.4;
 const PROFICIENT_ICE_SCALAR: f64 = 0.7;
 
-const DEFAULT_ENTITY_EXPECTANCY: u8 = 15;
+const DEFAULT_ENTITY_EXPECTANCY: u8 = 70;
+const DEFAULT_LIFE_STD_DEV: u8 = 15;
+const DEFAULT_NUM_RANDOM_ENTITIES: u8 = 20;
 const DEFAULT_TIME_STEPS: u8 = 1;
 
 #[derive(IntoPyObject,Debug)]
@@ -50,6 +52,7 @@ impl Entity {
         }
 
         let death_age = death_distr.get_death_age();
+        //println!("DYING AT: {}", death_age);
 
         Entity {age: 1, hunger: 0, is_alive: true, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male, death_age}
     }
@@ -94,12 +97,13 @@ impl EntityMgmt {
         self.entities.len()
     }
 
-    pub fn generate_random_entities(&mut self, count: u8, life_exp: Option<u8>) {
+    pub fn generate_random_entities(&mut self, count: u16, life_exp: Option<u8>, life_std_dev: Option<u8>) {
         let between_x = Uniform::try_from(self.spawn_area.0..self.spawn_area.2).unwrap();
         let between_y = Uniform::try_from(self.spawn_area.1..self.spawn_area.3).unwrap();
         let gender = Bernoulli::new(0.5).unwrap();
         let expectancy = life_exp.unwrap_or(DEFAULT_ENTITY_EXPECTANCY);
-        let death_distr = WeibullDeath::new(expectancy);
+        let deviation = life_exp.unwrap_or(DEFAULT_LIFE_STD_DEV);
+        let death_distr = WeibullDeath::new(expectancy, deviation);
         let mut rng = rand::rng();
         for id in 0..count {
             let spawn_loc_x = between_x.sample(&mut rng);

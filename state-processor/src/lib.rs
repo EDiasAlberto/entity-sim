@@ -9,7 +9,7 @@ fn run_terrain_gen(width: u16, height: u16, depth: u8) -> core::Terrain{
 }
 
 #[pyfunction] 
-fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16), num_entities: Option<u8>) -> core::GameState {
+fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16), num_entities: Option<u16>) -> core::GameState {
     core::generate_game_state(map_size, spawn_zone, num_entities)
 }
 

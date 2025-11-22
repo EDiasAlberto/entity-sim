@@ -30,12 +30,12 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) -> Terrai
 
 }
 
-pub fn generate_entities(spawn_zone: (u16, u16, u16, u16), terrain_dims: (u16, u16), amount: Option<u8>) -> EntityMgmt {
+pub fn generate_entities(spawn_zone: (u16, u16, u16, u16), terrain_dims: (u16, u16), amount: Option<u16>) -> EntityMgmt {
     println!("Generating entities!");
     let num_entities = amount.unwrap_or(15);
 
     let mut mgmt = EntityMgmt::new(spawn_zone, terrain_dims);
-    mgmt.generate_random_entities(num_entities, None);
+    mgmt.generate_random_entities(num_entities, Some(15), Some(2));
     mgmt
 }
 
@@ -47,7 +47,7 @@ pub fn generate_clock(initial_time: Option<u32>) -> TimeMgmt {
     TimeMgmt::new(start_time)
 }
 
-pub fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16), starting_entities: Option<u8>) -> GameState {
+pub fn generate_game_state(map_size: (u16, u16, u8), spawn_zone: (u16, u16, u16, u16), starting_entities: Option<u16>) -> GameState {
     let time = generate_clock(None);
     let terrain = generate_terrain(map_size, None);
     let entities = generate_entities(spawn_zone, terrain.get_dims(), starting_entities);
