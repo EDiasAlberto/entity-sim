@@ -77,6 +77,10 @@ while running:
             if event.key == pygame.K_SPACE: 
                 gs.advance_state()
                 entity_surface = render_entities(gs, WIDTH, HEIGHT)
+            elif event.key == pygame.K_r:
+                gs.reset_game_state(True)
+                terrain_surface = render_terrain(gs, colour_dict, WIDTH, HEIGHT)
+                entity_surface = render_entities(gs, WIDTH, HEIGHT)
     screen.fill((0, 0, 0))
     screen.blit(terrain_surface, (0, 0))
     screen.blit(entity_surface, (0, 0))

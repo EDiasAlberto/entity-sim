@@ -75,6 +75,10 @@ impl Entity {
         self.age = self.age + age_increase;
     }
 
+    fn grow_bigger(&mut self, size_increase: u8) {
+        self.size = self.size + size_increase;
+    }
+
     fn do_death_check(&mut self) -> bool {
         self.is_alive = self.age <= self.death_age;
         !self.is_alive
@@ -212,6 +216,7 @@ impl EntityMgmt {
         for (_id, entity) in &mut self.entities {
             if entity.is_alive {
                 entity.grow_older(1);
+                entity.grow_bigger(1);
                 entity.do_death_check();
             }
         }
