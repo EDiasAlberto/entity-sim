@@ -49,8 +49,8 @@ def reset_game(queue, preserve_terrain: bool):
     global gs, terrain_surface, entity_surface
     gs.reset_game_state(preserve_terrain)
     terrain_surface = render_terrain(gs, colour_dict, WIDTH, HEIGHT)
+    queue.put("gen_entities")
     entity_surface = render_entities(gs, WIDTH, HEIGHT)
-    print("done updating!")
     queue.put("done")
 
 # Initialize game state
@@ -70,6 +70,7 @@ colour_dict = {
 overlay_active = False
 pygame.init()
 font = pygame.font.SysFont(None, 60)
+subfont = pygame.font.SysFont(None, 40)
 (WIDTH, HEIGHT) = gs.get_terrain_map()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -95,21 +96,22 @@ while running:
             elif event.key == pygame.K_r:
                 if not overlay_active:
                     overlay_active = True
-                    if event.mod & pygame.KMOD_LSHIFT:
-                        process = multiprocessing.Process(target=reset_game, args=(queue, False))
-                        process.start()
-                    else:
-                        process = multiprocessing.Process(target=reset_game, args=(queue, True))
-                        process.start()
+                    preserve_terrain = not (event.mod & pygame.KMOD_LSHIFT)
+                    process = multiprocessing.Process(target=reset_game, args=(queue, preserve_terrain))
+                    process.start()
+
+    if overlay_active:
+        loading_stage = "Generating terrain..."
 
     # Poll queue for messages
     try:
         msg = queue.get_nowait()
+        if msg == "gen_entities":
+            loading_stage = "Generating entities..."
         if msg == "done":
             overlay_active = False
     except:
         pass
-
 
     if not overlay_active:
         screen.fill((0, 0, 0))
@@ -121,6 +123,7 @@ while running:
         screen.blit(overlay, (0, 0))
 
         text = font.render("Resetting...", True, (255, 255, 255))
+        subtext = subfont.render(loading_stage, True, (255, 255, 255))
         rect = text.get_rect(center=screen.get_rect().center)
         screen.blit(text, rect)
     
