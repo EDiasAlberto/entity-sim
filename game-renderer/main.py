@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 import state_processor as sp 
+import threading
 
 
 def render_terrain(game_state, colour_dict, terrain_width, terrain_height):
@@ -42,6 +43,12 @@ def render_entities(game_state, width, height, entity_color=(255, 255, 0)):
 
     return surf
 
+def reset_game(preserve_terrain: bool):
+    global overlay_active, gs, terrain_surface, entity_surface
+    gs.reset_game_state(preserve_terrain)
+    terrain_surface = render_terrain(gs, colour_dict, WIDTH, HEIGHT)
+    entity_surface = render_entities(gs, WIDTH, HEIGHT)
+    overlay_active = False
 
 # Initialize game state
 gs = sp.generate_game_state((800, 800, 10), (100, 100, 500, 500), 5)
@@ -54,6 +61,7 @@ colour_dict = {
 }
 
 # Initialize pygame
+overlay_active = False
 pygame.init()
 (WIDTH, HEIGHT) = gs.get_terrain_map()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -68,7 +76,7 @@ entity_surface = render_entities(gs, WIDTH, HEIGHT)
 # Game loop
 running = True
 while running:
-    clock.tick(60)
+    clock.tick(24)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -78,12 +86,11 @@ while running:
                 gs.advance_state()
                 entity_surface = render_entities(gs, WIDTH, HEIGHT)
             elif event.key == pygame.K_r:
+                overlay_active = True
                 if event.mod & pygame.KMOD_LSHIFT:
-                    gs.reset_game_state(False)
+                   threading.Thread(target=reset_game, args=(False,), daemon=True).start()
                 else:
-                    gs.reset_game_state(True)
-                terrain_surface = render_terrain(gs, colour_dict, WIDTH, HEIGHT)
-                entity_surface = render_entities(gs, WIDTH, HEIGHT)
+                   threading.Thread(target=reset_game, args=(True, ), daemon=True).start()
     screen.fill((0, 0, 0))
     screen.blit(terrain_surface, (0, 0))
     screen.blit(entity_surface, (0, 0))
