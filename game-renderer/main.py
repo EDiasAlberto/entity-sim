@@ -1,6 +1,8 @@
 import pygame
 import numpy as np
 import state_processor as sp 
+from multiprocessing import Manager
+import multiprocessing
 import threading
 
 
@@ -43,15 +45,19 @@ def render_entities(game_state, width, height, entity_color=(255, 255, 0)):
 
     return surf
 
-def reset_game(preserve_terrain: bool):
-    global overlay_active, gs, terrain_surface, entity_surface
+def reset_game(queue, preserve_terrain: bool):
+    global gs, terrain_surface, entity_surface
     gs.reset_game_state(preserve_terrain)
     terrain_surface = render_terrain(gs, colour_dict, WIDTH, HEIGHT)
     entity_surface = render_entities(gs, WIDTH, HEIGHT)
-    overlay_active = False
+    print("done updating!")
+    queue.put("done")
 
 # Initialize game state
 gs = sp.generate_game_state((800, 800, 10), (100, 100, 500, 500), 5)
+multiprocessing.set_start_method("fork")
+manager = Manager()
+queue = manager.Queue()
 
 # Define material colors
 colour_dict = {
@@ -63,6 +69,7 @@ colour_dict = {
 # Initialize pygame
 overlay_active = False
 pygame.init()
+font = pygame.font.SysFont(None, 60)
 (WIDTH, HEIGHT) = gs.get_terrain_map()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -76,7 +83,7 @@ entity_surface = render_entities(gs, WIDTH, HEIGHT)
 # Game loop
 running = True
 while running:
-    clock.tick(24)
+    clock.tick(10)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -86,14 +93,36 @@ while running:
                 gs.advance_state()
                 entity_surface = render_entities(gs, WIDTH, HEIGHT)
             elif event.key == pygame.K_r:
-                overlay_active = True
-                if event.mod & pygame.KMOD_LSHIFT:
-                   threading.Thread(target=reset_game, args=(False,), daemon=True).start()
-                else:
-                   threading.Thread(target=reset_game, args=(True, ), daemon=True).start()
-    screen.fill((0, 0, 0))
-    screen.blit(terrain_surface, (0, 0))
-    screen.blit(entity_surface, (0, 0))
+                if not overlay_active:
+                    overlay_active = True
+                    if event.mod & pygame.KMOD_LSHIFT:
+                        process = multiprocessing.Process(target=reset_game, args=(queue, False))
+                        process.start()
+                    else:
+                        process = multiprocessing.Process(target=reset_game, args=(queue, True))
+                        process.start()
+
+    # Poll queue for messages
+    try:
+        msg = queue.get_nowait()
+        if msg == "done":
+            overlay_active = False
+    except:
+        pass
+
+
+    if not overlay_active:
+        screen.fill((0, 0, 0))
+        screen.blit(terrain_surface, (0, 0))
+        screen.blit(entity_surface, (0, 0))
+    else:
+        overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))  # translucent black
+        screen.blit(overlay, (0, 0))
+
+        text = font.render("Resetting...", True, (255, 255, 255))
+        rect = text.get_rect(center=screen.get_rect().center)
+        screen.blit(text, rect)
     
     pygame.display.update()
             
