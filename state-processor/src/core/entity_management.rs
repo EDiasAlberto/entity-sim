@@ -100,6 +100,7 @@ impl EntityMgmt {
 
     pub fn reset(&mut self) {
         *self = Self::new(self.spawn_area, self.area_dims);
+        self.generate_random_entities(15, None, None);
     }
 
     fn entity_speed_given_material(entity: &Entity, material: u8) -> u8 {
