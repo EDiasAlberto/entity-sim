@@ -27,7 +27,7 @@ def render_terrain(game_state, colour_dict, terrain_width, terrain_height):
 
     return surf
 
-def render_entities(game_state, width, height, entity_color=(255, 255, 0), entity_size=3):
+def render_entities(game_state, width, height, entity_color=(255, 255, 0)):
     BACKGROUND = (0,0,0)
     entities = gs.get_entity_locations() 
     surf = pygame.Surface((height, width))
@@ -36,6 +36,7 @@ def render_entities(game_state, width, height, entity_color=(255, 255, 0), entit
     
     for entity_id, x, y, is_alive in entities:
         # Draw entity as a circle
+        entity_size = gs.get_entity_size(entity_id)
         render_color = entity_color if is_alive else (255, 0, 255)
         pygame.draw.circle(surf, render_color, (int(x), int(y)), entity_size)
 

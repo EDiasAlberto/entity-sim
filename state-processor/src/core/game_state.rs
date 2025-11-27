@@ -37,6 +37,10 @@ impl GameState {
         Ok(PyArray2::from_vec2(py, &rows).unwrap().to_owned())
     }
 
+    fn get_entity_size(&self, id: u16) -> i8 {
+        self.entity_mgmt.get_entity_size(id)
+    }
+
     fn get_map_data<'py>(&self, py: Python<'py>) -> PyResult<(Bound<'py, PyArray2<u8>>, Bound<'py, PyArray2<u8>>)> {
         let (width, height) = self.terrain_map.get_dims();
         let size = (height as usize, width as usize);

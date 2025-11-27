@@ -41,6 +41,7 @@ fn calculate_material_speeds(is_climber: bool, is_skater: bool, grass_speed: f64
 #[derive(IntoPyObject,Debug)]
 pub struct Entity {
     age: u8,
+    size: u8,
     death_age: u8,
     hunger: u8,
     is_alive: bool,
@@ -62,7 +63,7 @@ impl Entity {
         let death_age = death_distr.get_death_age();
         //println!("DYING AT: {}", death_age);
 
-        Entity {age: 1, hunger: 0, is_alive: true, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male, death_age}
+        Entity {age: 1, size: 1, hunger: 0, is_alive: true, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male, death_age}
     }
 
 
@@ -140,6 +141,16 @@ impl EntityMgmt {
         let clamped_pos_x = new_pos.x.clamp(0, map_dims.0 as i32);
         let clamped_pos_y = new_pos.y.clamp(0, map_dims.1 as i32);
         (clamped_pos_x.try_into().unwrap(), clamped_pos_y.try_into().unwrap())
+    }
+
+
+    pub fn get_entity_size(&self, id: u16) -> i8 {
+        let ent = self.entities.get(&id);
+
+        match ent {
+            Some(x) => x.size as i8,
+            None => -1,
+        }
     }
 
     pub fn get_and_move_entity(&mut self, id: u16, movement: IVec2) -> bool { 
