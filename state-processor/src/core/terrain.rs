@@ -66,6 +66,10 @@ impl Terrain {
         Terrain {width , height, depth, map: vec![]}
     }
 
+    pub fn reset(&mut self) {
+        *self = Self::new(self.width, self.height, self.depth);
+    }
+
     pub fn get_point(&self, x: u16, y: u16) -> &MapPoint {
         let idx: usize = (y as usize * self.width as usize) + (x as usize);
         return &(self.map[idx]);

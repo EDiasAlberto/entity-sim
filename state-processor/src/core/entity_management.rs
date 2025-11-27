@@ -94,6 +94,10 @@ impl EntityMgmt {
         EntityMgmt {spawn_area, area_dims, entities: HashMap::new()}
     }
 
+    pub fn reset(&mut self) {
+        *self = Self::new(self.spawn_area, self.area_dims);
+    }
+
     fn entity_speed_given_material(entity: &Entity, material: u8) -> u8 {
         match material {
             0 => entity.mud_speed,
