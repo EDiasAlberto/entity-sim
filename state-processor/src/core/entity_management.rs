@@ -20,6 +20,24 @@ const DEFAULT_LIFE_STD_DEV: u8 = 15;
 const DEFAULT_NUM_RANDOM_ENTITIES: u8 = 20;
 const DEFAULT_TIME_STEPS: u8 = 1;
 
+fn calculate_material_speeds(is_climber: bool, is_skater: bool, grass_speed: f64) -> (f64, f64) {
+    let mud_speed: f64;
+    let ice_speed: f64;
+
+    if is_climber {
+        mud_speed = grass_speed * PROFICIENT_MUD_SCALAR;
+    } else {
+        mud_speed = grass_speed * BASE_MUD_SCALAR;
+    }
+
+    if is_skater {
+        ice_speed = grass_speed * PROFICIENT_ICE_SCALAR;
+    } else {
+        ice_speed = grass_speed * BASE_ICE_SCALAR;
+    }
+    (mud_speed, ice_speed)
+}
+
 #[derive(IntoPyObject,Debug)]
 pub struct Entity {
     age: u8,
@@ -37,25 +55,16 @@ pub struct Entity {
 impl Entity {
     fn new(base_speed: u8, is_climber: bool, is_skater: bool, location: (u16, u16), is_male: bool, death_distr: &impl DeathCalc) -> Entity {
         let grass_speed: f64 = base_speed.into();
-        let mud_speed: f64;
-        let ice_speed: f64;
-        if is_climber {
-            mud_speed = grass_speed * PROFICIENT_MUD_SCALAR;
-        } else {
-            mud_speed = grass_speed * BASE_MUD_SCALAR;
-        }
 
-        if is_skater {
-            ice_speed = grass_speed * PROFICIENT_ICE_SCALAR;
-        } else {
-            ice_speed = grass_speed * BASE_ICE_SCALAR;
-        }
+        let (mud_speed, ice_speed) = calculate_material_speeds(is_climber, is_skater, grass_speed);
+
 
         let death_age = death_distr.get_death_age();
         //println!("DYING AT: {}", death_age);
 
         Entity {age: 1, hunger: 0, is_alive: true, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male, death_age}
     }
+
 
     fn update_location(&mut self, new_loc: (u16, u16)) {
         self.location = new_loc;
