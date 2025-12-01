@@ -103,7 +103,6 @@ while running:
     if overlay_active:
         loading_stage = "Generating terrain..."
 
-    # Poll queue for messages
     try:
         msg = queue.get_nowait()
         if msg == "gen_entities":

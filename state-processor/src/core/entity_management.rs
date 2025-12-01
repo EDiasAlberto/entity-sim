@@ -15,6 +15,9 @@ const PROFICIENT_MUD_SCALAR: f64 = 0.8;
 const BASE_ICE_SCALAR: f64 = 0.4;
 const PROFICIENT_ICE_SCALAR: f64 = 0.7;
 
+const PEAK_FERTILITY_AGE: f32 = 30.0;
+const MIN_FERTILE_AGE: f32 = 15.0;
+const MAX_FERTILE_AGE: f32 = 45.0;
 const DEFAULT_ENTITY_EXPECTANCY: u8 = 70;
 const DEFAULT_LIFE_STD_DEV: u8 = 15;
 const DEFAULT_NUM_RANDOM_ENTITIES: u8 = 20;
@@ -51,6 +54,7 @@ pub struct Entity {
     mud_speed: u8,
     ice_speed: u8,
     location: (u16, u16),
+    fertility: f32,
 }
 
 impl Entity {
@@ -63,7 +67,7 @@ impl Entity {
         let death_age = death_distr.get_death_age();
         //println!("DYING AT: {}", death_age);
 
-        Entity {age: 1, size: 1, hunger: 0, is_alive: true, is_pregnant: false, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male, death_age}
+        Entity {age: 1, size: 1, hunger: 0, is_alive: true, is_pregnant: false, fertility: 0.0, grass_speed: (grass_speed as u8), mud_speed: (mud_speed as u8), ice_speed: (ice_speed as u8), location, is_male, death_age}
     }
 
 
@@ -77,6 +81,23 @@ impl Entity {
 
     fn grow_bigger(&mut self, size_increase: u8) {
         self.size = self.size + size_increase;
+    }
+
+    // for now, fertility follows quadratic growth and decay about the peak age
+    fn get_fertility_at_age(age: u8) -> f32 {
+        let quadratic_scalar = (-100.0)/((PEAK_FERTILITY_AGE - MIN_FERTILE_AGE) * (PEAK_FERTILITY_AGE - MAX_FERTILE_AGE));
+        (age as f32 - MIN_FERTILE_AGE) * (age as f32 - MAX_FERTILE_AGE) * quadratic_scalar
+
+    }
+
+    fn update_fertility(&mut self) {
+        if (self.age as f32) < MIN_FERTILE_AGE {
+            self.fertility = 0.0;
+        } else if (self.age as f32) > MAX_FERTILE_AGE {
+            self.fertility = 0.0;
+        } else {
+            self.fertility = Self::get_fertility_at_age(self.age);
+        }
     }
 
     fn do_death_check(&mut self) -> bool {
@@ -217,8 +238,11 @@ impl EntityMgmt {
         for (_id, entity) in &mut self.entities {
             if entity.is_alive {
                 entity.grow_older(1);
-                entity.grow_bigger(1);
-                entity.do_death_check();
+                let died = entity.do_death_check();
+                if !died {
+                    entity.grow_bigger(1);
+                    entity.update_fertility();
+                }
             }
         }
     }
