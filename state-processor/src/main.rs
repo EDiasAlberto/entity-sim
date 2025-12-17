@@ -1,6 +1,7 @@
 // Contains binary arg handling to allow testing of rust lib
 mod core;
 
+use std::time::{SystemTime, UNIX_EPOCH};
 use more_asserts::assert_lt;
 use std::env;
 
@@ -24,6 +25,20 @@ fn run_entity_gen(_args: &[String]) {
         println!("Entity ID: {}, is at {:#?}", id, loc);
     }
 
+}
+
+fn time_entity_movement(_args: &[String]) {
+    let mut mgmt = core::EntityMgmt::new((0,0,100,100), (800, 800));
+    let terrain = core::generate_terrain((800, 800, 20), None);
+    mgmt.generate_random_entities(1000, None, None);
+    let iterations = 20;
+    let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    for i in 0..iterations {
+        mgmt.random_move_all_entities(&terrain);
+    }
+    let end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let diff = (end - start);
+    println!("Operation took {:#?}", diff);
 }
 
 fn advance_game_state(args: &[String]) {
@@ -51,6 +66,7 @@ fn main() {
     dbg!(mode);
 
     match mode.as_str() {
+        "time-operation" => time_entity_movement(&args),
         "gen-map" => validate_and_run_terrain_gen(&args),
         "gen-entities" => run_entity_gen(&args),
         "gen-state" => advance_game_state(&args),

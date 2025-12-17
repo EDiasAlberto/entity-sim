@@ -97,9 +97,9 @@ impl Entity {
     // reasonable distribution instead
     fn update_speed(&mut self) {
         if (self.age <= 30) {
-            self.speed = self.speed + 1;
+            self.grass_speed = self.grass_speed + 1;
         } else {
-            self.speed = max(self.speed - 1, 0);
+            self.grass_speed = max(self.grass_speed - 1, 0);
         }
 
     }
@@ -228,7 +228,7 @@ impl EntityMgmt {
         (rotated_x as i32, rotated_y as i32)
     }
 
-    fn random_move_all_entities(&mut self, map: &Terrain) {
+    pub fn random_move_all_entities(&mut self, map: &Terrain) {
         let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
         let mut rng = rand::rng();
         for (_id, entity) in &mut self.entities {
