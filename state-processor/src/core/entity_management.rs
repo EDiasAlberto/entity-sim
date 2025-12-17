@@ -4,10 +4,13 @@ use rand::distr::{Bernoulli, Distribution, Uniform};
 use pyo3::prelude::*;
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use std::cmp::max;
 
 mod death_calculations;
 
 use death_calculations::{DeathCalc, WeibullDeath};
+
+const DEFAULT_THREAD_COUNT: u8 = 6;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
@@ -87,6 +90,17 @@ impl Entity {
     fn get_fertility_at_age(age: u8) -> f32 {
         let quadratic_scalar = (-100.0)/((PEAK_FERTILITY_AGE - MIN_FERTILE_AGE) * (PEAK_FERTILITY_AGE - MAX_FERTILE_AGE));
         (age as f32 - MIN_FERTILE_AGE) * (age as f32 - MAX_FERTILE_AGE) * quadratic_scalar
+
+    }
+
+    // temporary function for the time being, needs to be set to some 
+    // reasonable distribution instead
+    fn update_speed(&mut self) {
+        if (self.age <= 30) {
+            self.speed = self.speed + 1;
+        } else {
+            self.speed = max(self.speed - 1, 0);
+        }
 
     }
 
@@ -241,6 +255,7 @@ impl EntityMgmt {
                 let died = entity.do_death_check();
                 if !died {
                     entity.grow_bigger(1);
+                    entity.update_speed();
                     entity.update_fertility();
                 }
             }
