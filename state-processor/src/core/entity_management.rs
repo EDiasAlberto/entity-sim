@@ -93,6 +93,15 @@ impl Entity {
 
     }
 
+    fn get_speed_for_material(&self, material: u8) -> u8 {
+        match material {
+            0 => self.mud_speed,
+            1 => self.grass_speed,
+            2 => self.ice_speed,
+            _ => self.grass_speed,
+        }
+    }
+
     // temporary function for the time being, needs to be set to some 
     // reasonable distribution instead
     fn update_speed(&mut self) {
@@ -136,15 +145,6 @@ impl EntityMgmt {
     pub fn reset(&mut self) {
         *self = Self::new(self.spawn_area, self.area_dims);
         self.generate_random_entities(15, None, None);
-    }
-
-    fn entity_speed_given_material(entity: &Entity, material: u8) -> u8 {
-        match material {
-            0 => entity.mud_speed,
-            1 => entity.grass_speed,
-            2 => entity.ice_speed,
-            _ => entity.grass_speed,
-        }
     }
 
     pub fn get_num_entities(&self) -> usize {
@@ -214,8 +214,7 @@ impl EntityMgmt {
     }
     */
 
-    fn generate_vector(entity: &Entity, material: u8, direction: f64) -> IVec2 {
-        let speed = Self::entity_speed_given_material(entity, material);
+    fn generate_vector(speed: u8, direction: f64) -> IVec2 {
         let (rot_x, rot_y) = Self::calculate_rotated_components(speed as f64, direction);
         IVec2::new(rot_x, rot_y)
     }
@@ -228,16 +227,35 @@ impl EntityMgmt {
         (rotated_x as i32, rotated_y as i32)
     }
 
+    fn calculate_new_entity_pos(area_dims: (u16, u16), map: &Terrain, entity: &Entity, direction: f64) -> (u16, u16) {
+        //let entity = self.entities.get(entity_id).unwrap();
+        let (x, y) = entity.location;
+        let material = map.get_material(x, y);
+        let speed = entity.get_speed_for_material(material);
+        let movement_vector = Self::generate_vector(speed, direction);
+        let new_location = Self::clamp_entity_movement(area_dims, (x, y), movement_vector);
+        new_location
+    }
+
+    pub fn MT_random_move_all_entities(&mut self, map: &Terrain) {
+        let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
+        let mut rng = rand::rng();
+        for (id, entity) in &mut self.entities {
+            if entity.is_alive {
+                let direction = between.sample(&mut rng);
+                let new_location = Self::calculate_new_entity_pos(self.area_dims, map, entity, direction);
+                entity.update_location(new_location);
+            }
+        }
+    }
+
     pub fn random_move_all_entities(&mut self, map: &Terrain) {
         let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
         let mut rng = rand::rng();
-        for (_id, entity) in &mut self.entities {
+        for (id, entity) in &mut self.entities {
             if entity.is_alive {
-                let (x, y) = entity.location;
-                let material = map.get_material(x, y);
                 let direction = between.sample(&mut rng);
-                let movement_vector = Self::generate_vector(entity, material, direction);
-                let new_location = Self::clamp_entity_movement(self.area_dims, (x, y), movement_vector);
+                let new_location = Self::calculate_new_entity_pos(self.area_dims, map, entity, direction);
                 entity.update_location(new_location);
             }
         }
