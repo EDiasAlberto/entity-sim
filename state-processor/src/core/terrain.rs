@@ -1,5 +1,6 @@
 use noise::{Perlin, NoiseFn};
 use pyo3::prelude::*;
+use rand::Rng;
 use std::fmt;
 
 
@@ -61,9 +62,19 @@ impl Terrain {
 }
 */
 
+
 impl Terrain {
     pub fn new(width: u16, height: u16, depth: u8) -> Terrain {
         Terrain {width , height, depth, map: vec![]}
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new(self.width, self.height, self.depth);
+        let mut rng = rand::rng();
+        let random_seed: u32 = rng.random();
+        let perlin = Perlin::new(random_seed);
+        let biome_perlin = Perlin::new(random_seed.wrapping_add(1000));
+        self.initialise_terrain(&perlin, &biome_perlin);
     }
 
     pub fn get_point(&self, x: u16, y: u16) -> &MapPoint {

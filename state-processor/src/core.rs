@@ -35,7 +35,7 @@ pub fn generate_entities(spawn_zone: (u16, u16, u16, u16), terrain_dims: (u16, u
     let num_entities = amount.unwrap_or(15);
 
     let mut mgmt = EntityMgmt::new(spawn_zone, terrain_dims);
-    mgmt.generate_random_entities(num_entities, Some(15), Some(2));
+    mgmt.generate_random_entities(num_entities, None, None);
     mgmt
 }
 

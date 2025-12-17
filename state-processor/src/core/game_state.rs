@@ -23,6 +23,14 @@ impl GameState {
         self.terrain_map.get_dims()
     }
 
+    pub fn reset_game_state(&mut self, same_map: Option<bool>) {
+        let reset_map = !(same_map.unwrap_or(false));
+        self.time_mgmt.reset();
+        if reset_map {
+            self.terrain_map.reset();
+        }
+        self.entity_mgmt.reset();
+    }
 
     fn get_entity_locations<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArray2<u16>>> {
         let num_entities = self.entity_mgmt.get_num_entities();
@@ -35,6 +43,10 @@ impl GameState {
         }
         
         Ok(PyArray2::from_vec2(py, &rows).unwrap().to_owned())
+    }
+
+    fn get_entity_size(&self, id: u16) -> i8 {
+        self.entity_mgmt.get_entity_size(id)
     }
 
     fn get_map_data<'py>(&self, py: Python<'py>) -> PyResult<(Bound<'py, PyArray2<u8>>, Bound<'py, PyArray2<u8>>)> {

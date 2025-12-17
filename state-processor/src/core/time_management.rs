@@ -14,4 +14,8 @@ impl TimeMgmt {
         self.time += 1;
         self.time
     }
+
+    pub fn reset(&mut self) {
+        self.time = 0;
+    }
 }

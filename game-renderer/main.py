@@ -1,6 +1,9 @@
 import pygame
 import numpy as np
 import state_processor as sp 
+from multiprocessing import Manager
+import multiprocessing
+import threading
 
 
 def render_terrain(game_state, colour_dict, terrain_width, terrain_height):
@@ -27,7 +30,7 @@ def render_terrain(game_state, colour_dict, terrain_width, terrain_height):
 
     return surf
 
-def render_entities(game_state, width, height, entity_color=(255, 255, 0), entity_size=3):
+def render_entities(game_state, width, height, entity_color=(255, 255, 0)):
     BACKGROUND = (0,0,0)
     entities = gs.get_entity_locations() 
     surf = pygame.Surface((height, width))
@@ -36,14 +39,25 @@ def render_entities(game_state, width, height, entity_color=(255, 255, 0), entit
     
     for entity_id, x, y, is_alive in entities:
         # Draw entity as a circle
+        entity_size = gs.get_entity_size(entity_id)
         render_color = entity_color if is_alive else (255, 0, 255)
         pygame.draw.circle(surf, render_color, (int(x), int(y)), entity_size)
 
     return surf
 
+def reset_game(queue, preserve_terrain: bool):
+    global gs, terrain_surface, entity_surface
+    gs.reset_game_state(preserve_terrain)
+    terrain_surface = render_terrain(gs, colour_dict, WIDTH, HEIGHT)
+    queue.put("gen_entities")
+    entity_surface = render_entities(gs, WIDTH, HEIGHT)
+    queue.put("done")
 
 # Initialize game state
 gs = sp.generate_game_state((800, 800, 10), (100, 100, 500, 500), 5)
+multiprocessing.set_start_method("fork")
+manager = Manager()
+queue = manager.Queue()
 
 # Define material colors
 colour_dict = {
@@ -53,7 +67,10 @@ colour_dict = {
 }
 
 # Initialize pygame
+overlay_active = False
 pygame.init()
+font = pygame.font.SysFont(None, 60)
+subfont = pygame.font.SysFont(None, 40)
 (WIDTH, HEIGHT) = gs.get_terrain_map()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -67,7 +84,7 @@ entity_surface = render_entities(gs, WIDTH, HEIGHT)
 # Game loop
 running = True
 while running:
-    clock.tick(60)
+    clock.tick(10)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -76,9 +93,38 @@ while running:
             if event.key == pygame.K_SPACE: 
                 gs.advance_state()
                 entity_surface = render_entities(gs, WIDTH, HEIGHT)
-    screen.fill((0, 0, 0))
-    screen.blit(terrain_surface, (0, 0))
-    screen.blit(entity_surface, (0, 0))
+            elif event.key == pygame.K_r:
+                if not overlay_active:
+                    overlay_active = True
+                    preserve_terrain = not (event.mod & pygame.KMOD_LSHIFT)
+                    process = multiprocessing.Process(target=reset_game, args=(queue, preserve_terrain))
+                    process.start()
+
+    if overlay_active:
+        loading_stage = "Generating terrain..."
+
+    try:
+        msg = queue.get_nowait()
+        if msg == "gen_entities":
+            loading_stage = "Generating entities..."
+        if msg == "done":
+            overlay_active = False
+    except:
+        pass
+
+    if not overlay_active:
+        screen.fill((0, 0, 0))
+        screen.blit(terrain_surface, (0, 0))
+        screen.blit(entity_surface, (0, 0))
+    else:
+        overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))  # translucent black
+        screen.blit(overlay, (0, 0))
+
+        text = font.render("Resetting...", True, (255, 255, 255))
+        subtext = subfont.render(loading_stage, True, (255, 255, 255))
+        rect = text.get_rect(center=screen.get_rect().center)
+        screen.blit(text, rect)
     
     pygame.display.update()
             
