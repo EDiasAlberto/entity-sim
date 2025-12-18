@@ -2,6 +2,7 @@ use noise::{Perlin, NoiseFn};
 use pyo3::prelude::*;
 use rand::Rng;
 use std::fmt;
+use std::mem::MaybeUninit;
 
 
 const BASE_NOISE_SCALE: f64 = 6.0;
@@ -65,7 +66,13 @@ impl Terrain {
 
 impl Terrain {
     pub fn new(width: u16, height: u16, depth: u8) -> Terrain {
-        Terrain {width , height, depth, map: vec![]}
+        let map_size = width as usize * height as usize;
+        Terrain {
+            width, 
+            height, 
+            depth, 
+            map: vec![MapPoint { height: 0, material: 0}; map_size]
+        }
     }
 
     pub fn reset(&mut self) {
@@ -138,7 +145,9 @@ impl Terrain {
                 
                 let height_val = Self::noise_range_change(self, noise_val, self.depth as f64);
                 let material_val = Self::biome_noise_to_material(self, combined_biome_noise);
-                self.map.push(MapPoint {height: height_val, material: material_val});
+                let idx = (y as usize * self.width as usize) + x as usize;
+                self.map[idx] = MapPoint {height: height_val, material: material_val};
+                //self.map.push(MapPoint {height: height_val, material: material_val});
             }
         }
         true

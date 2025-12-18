@@ -1,6 +1,7 @@
 //Defines core simulation handling logic
 use noise::Perlin;
 use rand::Rng;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 mod terrain;
 mod entity_management;
@@ -20,12 +21,18 @@ pub fn generate_terrain(dimensions: (u16, u16, u8), seed: Option<u32>) -> Terrai
         None => {let mut rng = rand::rng(); rng.random()},
     };
 
+    let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let perlin = Perlin::new(random_seed);
     let biome_perlin = Perlin::new(random_seed.wrapping_add(1000)); // Different seed for biomes
     let (width, height, depth) = dimensions;
     let mut new_terrain = Terrain::new(width, height, depth);
+    let definition_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     new_terrain.initialise_terrain(&perlin, &biome_perlin);
     //dbg!(new_terrain);
+    let init_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let def_time = definition_end - start;
+    let init_time = init_end - definition_end;
+    println!("{:#?} for definition, and {:#?} for init", def_time, init_time);
     new_terrain
 
 }
