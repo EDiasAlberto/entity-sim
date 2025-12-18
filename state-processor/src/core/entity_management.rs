@@ -2,6 +2,7 @@ use crate::core::Terrain;
 use glam::i32::IVec2;
 use rand::distr::{Bernoulli, Distribution, Uniform};
 use pyo3::prelude::*;
+use rayon::prelude::*;
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::cmp::max;
@@ -10,7 +11,7 @@ mod death_calculations;
 
 use death_calculations::{DeathCalc, WeibullDeath};
 
-const DEFAULT_THREAD_COUNT: u8 = 6;
+const MT_MIN_ENTITIES: usize = 375;
 
 const BASE_MUD_SCALAR: f64 = 0.6;
 const PROFICIENT_MUD_SCALAR: f64 = 0.8;
@@ -182,8 +183,8 @@ impl EntityMgmt {
     fn clamp_entity_movement(map_dims: (u16, u16), curr_pos: (u16, u16), movement: IVec2) -> (u16, u16) {
         let curr_vec = IVec2::new(curr_pos.0.into(), curr_pos.1.into());
         let new_pos = curr_vec + movement;
-        let clamped_pos_x = new_pos.x.clamp(0, map_dims.0 as i32);
-        let clamped_pos_y = new_pos.y.clamp(0, map_dims.1 as i32);
+        let clamped_pos_x = new_pos.x.clamp(0, map_dims.0 as i32 - 1);
+        let clamped_pos_y = new_pos.y.clamp(0, map_dims.1 as i32 - 1);
         (clamped_pos_x.try_into().unwrap(), clamped_pos_y.try_into().unwrap())
     }
 
@@ -239,7 +240,17 @@ impl EntityMgmt {
 
     pub fn MT_random_move_all_entities(&mut self, map: &Terrain) {
         let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
-        let mut rng = rand::rng();
+        
+        let _ = self.entities.par_iter_mut().for_each(|(id, entity)| {
+            if entity.is_alive{
+                let mut rng = rand::rng();
+                let direction = between.sample(&mut rng);
+                let new_location = Self::calculate_new_entity_pos(self.area_dims, map, entity, direction);
+                entity.update_location(new_location);
+            }
+        });
+
+        /*
         for (id, entity) in &mut self.entities {
             if entity.is_alive {
                 let direction = between.sample(&mut rng);
@@ -247,6 +258,7 @@ impl EntityMgmt {
                 entity.update_location(new_location);
             }
         }
+        */
     }
 
     pub fn random_move_all_entities(&mut self, map: &Terrain) {
@@ -285,7 +297,11 @@ impl EntityMgmt {
     pub fn advance_time(&mut self, map: &Terrain, steps: Option<u8>) {
         let num_steps = steps.unwrap_or(DEFAULT_TIME_STEPS);
         for _ in 0..num_steps {
-            self.random_move_all_entities(map);
+            if (self.get_num_entities() >= MT_MIN_ENTITIES) {
+                self.MT_random_move_all_entities(map);
+            } else {
+                self.random_move_all_entities(map);
+            }
             self.age_all_entities();
         }
         

@@ -28,17 +28,25 @@ fn run_entity_gen(_args: &[String]) {
 }
 
 fn time_entity_movement(_args: &[String]) {
-    let mut mgmt = core::EntityMgmt::new((0,0,100,100), (800, 800));
-    let terrain = core::generate_terrain((800, 800, 20), None);
-    mgmt.generate_random_entities(1000, None, None);
-    let iterations = 20;
+    let mut mgmt = core::EntityMgmt::new((0,0,200,200), (1000, 1000));
+    let terrain = core::generate_terrain((1000, 1000, 20), None);
+    mgmt.generate_random_entities(350, None, None);
+    let iterations = 200;
     let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     for i in 0..iterations {
         mgmt.random_move_all_entities(&terrain);
     }
     let end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let diff = (end - start);
-    println!("Operation took {:#?}", diff);
+    println!("Sequential took {:#?}", diff);
+
+    let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    for i in 0..iterations {
+        mgmt.MT_random_move_all_entities(&terrain);
+    }
+    let end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let diff = (end - start);
+    println!("MT took {:#?}", diff);
 }
 
 fn advance_game_state(args: &[String]) {
