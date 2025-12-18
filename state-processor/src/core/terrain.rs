@@ -1,8 +1,10 @@
 use noise::{Perlin, NoiseFn};
 use pyo3::prelude::*;
 use rand::Rng;
+use rayon::prelude::*;
 use std::fmt;
 use std::mem::MaybeUninit;
+use std::sync::Arc;
 
 
 const BASE_NOISE_SCALE: f64 = 6.0;
@@ -99,13 +101,13 @@ impl Terrain {
         point.height
     }
 
-    fn noise_range_change(&self, noise: f64, upper: f64) -> u8 {
+    fn noise_range_change(noise: f64, upper: f64) -> u8 {
         let normalised_noise = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0] 
         let scaled_height = normalised_noise * upper; 
         scaled_height as u8
     }
 
-    fn biome_noise_to_material(&self, noise: f64) -> u8 {
+    fn biome_noise_to_material(noise: f64) -> u8 {
         let normalised = (noise + 1.0) / 2.0; // noise: [-1.0, 1.0] -> [0.0, 1.0]
         
         // Adjust thresholds to reduce grass proportion
@@ -126,9 +128,9 @@ impl Terrain {
     pub fn initialise_terrain(&mut self, noise: &Perlin, biome_noise: &Perlin) -> bool {
         let scale: f64 = BASE_NOISE_SCALE / (self.width as f64 * 0.5);
         let biome_scale = BASE_BIOME_SCALE / (self.width as f64 * 0.5);
-        
         println!("{scale}");
-        for y in 0..self.height {
+        let mut rows: Vec<Vec<MapPoint>> = vec![];
+        self.map.par_chunks_mut(self.width as usize).enumerate().for_each(|(y, chunk)| 
             for x in 0..self.width { 
                 let noise_val = noise.get([x as f64 * scale, y as f64 * scale]);
                 
@@ -143,13 +145,15 @@ impl Terrain {
                 
                 let combined_biome_noise = (biome_noise_1 + biome_noise_2 + biome_noise_3) / 1.75;
                 
-                let height_val = Self::noise_range_change(self, noise_val, self.depth as f64);
-                let material_val = Self::biome_noise_to_material(self, combined_biome_noise);
-                let idx = (y as usize * self.width as usize) + x as usize;
-                self.map[idx] = MapPoint {height: height_val, material: material_val};
+                let height_val = Self::noise_range_change(noise_val, self.depth as f64);
+                let material_val = Self::biome_noise_to_material(combined_biome_noise);
+                chunk[x as usize] = MapPoint {height: height_val, material: material_val};
+                //let idx = (y as usize * self.width as usize) + x as usize;
+                //self.map[idx] = MapPoint {height: height_val, material: material_val};
                 //self.map.push(MapPoint {height: height_val, material: material_val});
             }
-        }
+
+        );
         true
     }
 }
