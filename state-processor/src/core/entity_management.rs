@@ -24,7 +24,6 @@ const MIN_FERTILE_AGE: f32 = 15.0;
 const MAX_FERTILE_AGE: f32 = 45.0;
 const DEFAULT_ENTITY_EXPECTANCY: u8 = 70;
 const DEFAULT_LIFE_STD_DEV: u8 = 15;
-const DEFAULT_NUM_RANDOM_ENTITIES: u8 = 20;
 const DEFAULT_TIME_STEPS: u8 = 1;
 
 fn calculate_material_speeds(is_climber: bool, is_skater: bool, grass_speed: f64) -> (f64, f64) {
@@ -106,7 +105,7 @@ impl Entity {
     // temporary function for the time being, needs to be set to some 
     // reasonable distribution instead
     fn update_speed(&mut self) {
-        if (self.age <= 30) {
+        if self.age <= 30 {
             self.grass_speed = self.grass_speed + 1;
         } else {
             self.grass_speed = max(self.grass_speed - 1, 0);
@@ -157,7 +156,7 @@ impl EntityMgmt {
         let between_y = Uniform::try_from(self.spawn_area.1..self.spawn_area.3).unwrap();
         let gender = Bernoulli::new(0.5).unwrap();
         let expectancy = life_exp.unwrap_or(DEFAULT_ENTITY_EXPECTANCY);
-        let deviation = life_exp.unwrap_or(DEFAULT_LIFE_STD_DEV);
+        let deviation = life_std_dev.unwrap_or(DEFAULT_LIFE_STD_DEV);
         let death_distr = WeibullDeath::new(expectancy, deviation);
         let mut rng = rand::rng();
         for id in 0..count {
@@ -238,10 +237,10 @@ impl EntityMgmt {
         new_location
     }
 
-    pub fn MT_random_move_all_entities(&mut self, map: &Terrain) {
+    pub fn mt_random_move_all_entities(&mut self, map: &Terrain) {
         let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
         
-        let _ = self.entities.par_iter_mut().for_each(|(id, entity)| {
+        let _ = self.entities.par_iter_mut().for_each(|(_id, entity)| {
             if entity.is_alive{
                 let mut rng = rand::rng();
                 let direction = between.sample(&mut rng);
@@ -264,7 +263,7 @@ impl EntityMgmt {
     pub fn random_move_all_entities(&mut self, map: &Terrain) {
         let between = Uniform::try_from(0.0..(2.0*PI)).unwrap();
         let mut rng = rand::rng();
-        for (id, entity) in &mut self.entities {
+        for (_id, entity) in &mut self.entities {
             if entity.is_alive {
                 let direction = between.sample(&mut rng);
                 let new_location = Self::calculate_new_entity_pos(self.area_dims, map, entity, direction);
@@ -297,8 +296,8 @@ impl EntityMgmt {
     pub fn advance_time(&mut self, map: &Terrain, steps: Option<u8>) {
         let num_steps = steps.unwrap_or(DEFAULT_TIME_STEPS);
         for _ in 0..num_steps {
-            if (self.get_num_entities() >= MT_MIN_ENTITIES) {
-                self.MT_random_move_all_entities(map);
+            if self.get_num_entities() >= MT_MIN_ENTITIES {
+                self.mt_random_move_all_entities(map);
             } else {
                 self.random_move_all_entities(map);
             }

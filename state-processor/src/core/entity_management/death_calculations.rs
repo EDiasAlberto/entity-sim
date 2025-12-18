@@ -1,10 +1,8 @@
 use rand::prelude::*;
 use rand_distr::Weibull;
 use roots::SimpleConvergency;
-use roots::{find_root_inverse_quadratic, find_root_brent, SearchError};
+use roots::{find_root_brent, SearchError};
 use statrs::function::gamma::gamma;
-
-const WEIBULL_SHAPE_DEFAULT: f64 = 5.0;
 
 pub trait DeathCalc {
     fn new(exp: u8, std_dev: u8) -> impl DeathCalc;

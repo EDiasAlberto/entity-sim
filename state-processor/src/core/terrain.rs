@@ -3,9 +3,6 @@ use pyo3::prelude::*;
 use rand::Rng;
 use rayon::prelude::*;
 use std::fmt;
-use std::mem::MaybeUninit;
-use std::sync::Arc;
-
 
 const BASE_NOISE_SCALE: f64 = 6.0;
 const BASE_BIOME_SCALE: f64 = 0.8;  // Much larger scale = bigger, smoother biomes
@@ -125,11 +122,12 @@ impl Terrain {
         (self.width, self.height)
     }
 
+    //TODO: perhaps cache this so it does not have to be in memory constantly 
+    // (Conditionally load by row ?)
     pub fn initialise_terrain(&mut self, noise: &Perlin, biome_noise: &Perlin) -> bool {
         let scale: f64 = BASE_NOISE_SCALE / (self.width as f64 * 0.5);
         let biome_scale = BASE_BIOME_SCALE / (self.width as f64 * 0.5);
         println!("{scale}");
-        let mut rows: Vec<Vec<MapPoint>> = vec![];
         self.map.par_chunks_mut(self.width as usize).enumerate().for_each(|(y, chunk)| 
             for x in 0..self.width { 
                 let noise_val = noise.get([x as f64 * scale, y as f64 * scale]);

@@ -33,19 +33,19 @@ fn time_entity_movement(_args: &[String]) {
     mgmt.generate_random_entities(350, None, None);
     let iterations = 200;
     let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    for i in 0..iterations {
+    for _i in 0..iterations {
         mgmt.random_move_all_entities(&terrain);
     }
     let end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    let diff = (end - start);
+    let diff = end - start;
     println!("Sequential took {:#?}", diff);
 
     let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    for i in 0..iterations {
-        mgmt.MT_random_move_all_entities(&terrain);
+    for _i in 0..iterations {
+        mgmt.mt_random_move_all_entities(&terrain);
     }
     let end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    let diff = (end - start);
+    let diff = end - start;
     println!("MT took {:#?}", diff);
 }
 

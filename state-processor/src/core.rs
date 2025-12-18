@@ -1,7 +1,7 @@
 //Defines core simulation handling logic
 use noise::Perlin;
 use rand::Rng;
-use std::time::{SystemTime, UNIX_EPOCH};
+//use std::time::{SystemTime, UNIX_EPOCH};
 
 mod terrain;
 mod entity_management;
